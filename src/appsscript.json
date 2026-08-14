@@ -1,0 +1,13 @@
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "dependencies": {},
+  "runtimeVersion": "V8",
+  "exceptionLogging": "STACKDRIVER",
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets.currentonly"
+  ]
+}

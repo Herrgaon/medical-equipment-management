@@ -1,0 +1,74 @@
+/**
+ * Cổng vào DUY NHẤT frontend được gọi (google.script.run). Frontend không được gọi thẳng
+ * module nghiệp vụ hay SpreadsheetApp (bất biến kiến trúc, xem CLAUDE.md).
+ *
+ * QUY ƯỚC BẮT BUỘC: mọi hàm dưới đây là toàn bộ bề mặt public của hệ thống. Hàm nào không có
+ * trong danh sách này thì KHÔNG được thiết kế để gọi từ trình duyệt. Danh tính người gọi luôn
+ * xác định qua token phiên (tham số đầu tiên của mọi hàm cần đăng nhập) — token được cấp bởi
+ * login() và server tự tra lại danh tính thật từ Sheet _SESSIONS/25_NGUOI_DUNG mỗi lần, KHÔNG
+ * có hàm nào tin vào bất kỳ thông tin "vai trò"/"quyền" nào client tự gửi lên.
+ *
+ * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping.
+ */
+
+function doGet(e) {
+  var template = HtmlService.createTemplateFromFile('Index');
+  return template.evaluate()
+    .setTitle('Quản lý Trang thiết bị Y tế')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+}
+
+/**
+ * Helper include chuẩn của HtmlService. CHỈ được gọi với tên file hardcode trong template
+ * (Index.html...), không bao giờ với giá trị đến từ client/tham số URL.
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+/**
+ * Bọc mọi Controller qua đây: lỗi nghiệp vụ (AppError) trả nguyên văn cho client; lỗi hệ thống
+ * khác chỉ log server-side, trả về mã lỗi chung — không rò rỉ stack trace/tên sheet ra trình duyệt.
+ */
+function _invokeController_(fn) {
+  try {
+    return fn();
+  } catch (err) {
+    if (err instanceof AppError) {
+      return Utils.fail(err.code, err.message);
+    }
+    console.error('Internal error: ' + (err && err.stack ? err.stack : err));
+    return Utils.fail(ERROR_CODES.INTERNAL_ERROR, 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.');
+  }
+}
+
+function login(loginId, password) {
+  return _invokeController_(function () {
+    return Utils.success(Auth.login(loginId, password));
+  });
+}
+
+function logout(token) {
+  return _invokeController_(function () {
+    return Utils.success(Auth.logout(token));
+  });
+}
+
+function changePassword(token, oldPassword, newPassword) {
+  return _invokeController_(function () {
+    return Utils.success(Auth.changePassword(token, oldPassword, newPassword));
+  });
+}
+
+function getCurrentUserInfo(token) {
+  return _invokeController_(function () {
+    return Utils.success(Auth.getCurrentUser(token));
+  });
+}
+
+/** Endpoint smoke-test: xác nhận pipeline doGet -> Core -> Database hoạt động end-to-end. Không cần đăng nhập. */
+function ping() {
+  return _invokeController_(function () {
+    return Utils.success({ serverTime: Utils.nowIso(), schemaVersion: SCHEMA_VERSION });
+  });
+}

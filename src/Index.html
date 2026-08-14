@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+  <?!= include('Shared_Styles'); ?>
+</head>
+<body>
+  <div class="card" id="loginCard">
+    <h1>Quản lý Trang thiết bị Y tế — BVDK Đông Sơn</h1>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Tên đăng nhập</label>
+        <input type="text" id="loginEmail" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Mật khẩu</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <div id="loginError" class="error-text"></div>
+      <button type="submit" id="loginBtn">Đăng nhập</button>
+    </form>
+  </div>
+
+  <div class="card" id="appCard" style="display:none;">
+    <h1>Quản lý Trang thiết bị Y tế — BVDK Đông Sơn</h1>
+    <div class="row"><span>Trạng thái</span><span id="status" class="status ok">Đã xác thực</span></div>
+    <div class="row"><span>Tên đăng nhập</span><span id="email">—</span></div>
+    <div class="row"><span>Họ tên</span><span id="hoTen">—</span></div>
+    <div class="row"><span>Vai trò</span><span id="vaiTro">—</span></div>
+    <div class="row"><span>Phạm vi khoa/phòng</span><span id="scope">—</span></div>
+    <div class="row"><span>Giờ server</span><span id="serverTime">—</span></div>
+    <button id="logoutBtn" class="secondary">Đăng xuất</button>
+  </div>
+
+  <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+  <?!= include('Shared_Scripts'); ?>
+  <script>
+    // Sprint 1.1: trang chẩn đoán duy nhất, xác nhận pipeline login -> Core -> Auth -> Database
+    // hoạt động end-to-end trước khi xây Devices.html/DeviceDetail.html ở Sprint 1.2.
+    var SESSION_STORAGE_KEY = 'qltbyt_session_token';
+
+    function showApp(user) {
+      document.getElementById('loginCard').style.display = 'none';
+      document.getElementById('appCard').style.display = '';
+      setText('email', user.tenDangNhap);
+      setText('hoTen', user.hoTen);
+      setText('vaiTro', user.vaiTro);
+      setText('scope', user.khoaPhongPhuTrach ? user.khoaPhongPhuTrach : 'Toàn viện');
+    }
+
+    function showLogin(errorMessage) {
+      document.getElementById('loginCard').style.display = '';
+      document.getElementById('appCard').style.display = 'none';
+      setText('loginError', errorMessage || '');
+    }
+
+    function tryResumeSession() {
+      var token = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!token) { showLogin(); return; }
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (response && response.success) {
+            showApp(response.data);
+          } else {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            showLogin();
+          }
+        })
+        .withFailureHandler(function () {
+          localStorage.removeItem(SESSION_STORAGE_KEY);
+          showLogin();
+        })
+        .getCurrentUserInfo(token);
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function (evt) {
+      evt.preventDefault();
+      var email = document.getElementById('loginEmail').value.trim();
+      var password = document.getElementById('loginPassword').value;
+      var btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      setText('loginError', '');
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          btn.disabled = false;
+          if (response && response.success) {
+            localStorage.setItem(SESSION_STORAGE_KEY, response.data.token);
+            showApp(response.data.user);
+          } else {
+            setText('loginError', response && response.error ? response.error.message : 'Đăng nhập thất bại.');
+          }
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          setText('loginError', err && err.message ? err.message : String(err));
+        })
+        .login(email, password);
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', function () {
+      var token = localStorage.getItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      showLogin();
+      if (token) google.script.run.logout(token);
+    });
+
+    callServer('ping',
+      function (data) { setText('serverTime', data.serverTime); },
+      function (err) { setText('serverTime', 'Lỗi: ' + err.message); }
+    );
+
+    tryResumeSession();
+  </script>
+</body>
+</html>

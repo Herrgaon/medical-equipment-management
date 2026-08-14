@@ -1,0 +1,26 @@
+<script>
+  /**
+   * Quy ước bắt buộc: dữ liệu trả về qua google.script.run KHÔNG được HtmlService tự escape
+   * (khác với template server-side ban đầu). Luôn dùng setText() (textContent) cho mọi giá trị
+   * có nguồn gốc từ Sheet/người dùng — KHÔNG BAO GIỜ dùng innerHTML với dữ liệu đó.
+   */
+  function setText(elementId, value) {
+    var el = document.getElementById(elementId);
+    if (el) el.textContent = (value === null || value === undefined) ? '' : String(value);
+  }
+
+  function callServer(fnName, onSuccess, onFailure) {
+    google.script.run
+      .withSuccessHandler(function (response) {
+        if (response && response.success) {
+          onSuccess(response.data);
+        } else {
+          onFailure(response && response.error ? response.error : { code: 'UNKNOWN', message: 'Lỗi không xác định.' });
+        }
+      })
+      .withFailureHandler(function (error) {
+        onFailure({ code: 'TRANSPORT_ERROR', message: error && error.message ? error.message : String(error) });
+      })
+      [fnName]();
+  }
+</script>
