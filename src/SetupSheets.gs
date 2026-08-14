@@ -9,7 +9,7 @@
  * bỏ — không idempotent theo nghĩa "chạy nhiều lần vô hại cần thiết", nhưng chạy lại vẫn an toàn
  * (tự phát hiện cột đã xoá thì bỏ qua, không lỗi).
  */
-function removeLegacyEmailColumn_() {
+function removeLegacyEmailColumn() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('25_NGUOI_DUNG');
   Utils.assert(sheet, ERROR_CODES.NOT_FOUND, 'Không tìm thấy sheet 25_NGUOI_DUNG.');
 
