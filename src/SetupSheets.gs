@@ -24,6 +24,37 @@ function removeLegacyEmailColumn() {
 }
 
 /**
+ * Dữ liệu danh mục MẪU để test CRUD thiết bị (Sprint 1.2) khi chưa có Admin UI nhập danh mục thật
+ * (Sprint 1.4). MA/TEN đặt tiền tố "MAU-" / "(mẫu)" để không lẫn với danh mục thật của bệnh viện —
+ * xoá tay các dòng này qua Sheet UI khi đã có danh mục thật, hàm này không tự dọn.
+ */
+function seedSampleCategories() {
+  var actor = 'system-bootstrap';
+  var samples = {
+    '02_LOAI_THIET_BI': ['Máy chẩn đoán hình ảnh', 'Thiết bị hồi sức cấp cứu'],
+    '03_NHOM_THIET_BI': ['Máy siêu âm', 'Máy thở'],
+    '04_KHOA_PHONG': ['Khoa Dược - Vật tư, Thiết bị y tế', 'Khoa Hồi sức cấp cứu'],
+    '05_VI_TRI': ['Phòng 101', 'Phòng 202'],
+    '06_HANG_SAN_XUAT': ['Philips', 'GE Healthcare'],
+    '07_NUOC_SAN_XUAT': ['Hà Lan', 'Mỹ'],
+    '08_NHA_CUNG_CAP': ['Công ty TNHH Thiết bị Y tế ABC (mẫu)'],
+    '09_NGUOI_PHU_TRACH': ['Nguyễn Văn A (mẫu)', 'Trần Thị B (mẫu)']
+  };
+
+  for (var tabName in samples) {
+    var existing = Database.list(tabName, {}).items;
+    if (existing.length > 0) {
+      Logger.log(tabName + ': đã có dữ liệu, bỏ qua.');
+      continue;
+    }
+    samples[tabName].forEach(function (ten) {
+      Database.insertRow(tabName, { MA: 'MAU-' + ten.substring(0, 3).toUpperCase(), TEN: ten, TRANG_THAI: 'Hoạt động' }, actor);
+    });
+    Logger.log(tabName + ': đã seed ' + samples[tabName].length + ' dòng mẫu.');
+  }
+}
+
+/**
  * Tạo đủ 36 Sheet nếu chưa có; nếu đã có, chỉ thêm cột thiếu vào CUỐI header (không xoá/sắp xếp
  * lại cột cũ, không đụng dữ liệu) — nhờ vậy chạy lại nhiều lần luôn an toàn, kể cả sau khi đã có
  * dữ liệu thật.

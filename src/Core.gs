@@ -8,7 +8,8 @@
  * login() và server tự tra lại danh tính thật từ Sheet _SESSIONS/25_NGUOI_DUNG mỗi lần, KHÔNG
  * có hàm nào tin vào bất kỳ thông tin "vai trò"/"quyền" nào client tự gửi lên.
  *
- * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping.
+ * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping,
+ * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice.
  */
 
 function doGet(e) {
@@ -70,5 +71,35 @@ function getCurrentUserInfo(token) {
 function ping() {
   return _invokeController_(function () {
     return Utils.success({ serverTime: Utils.nowIso(), schemaVersion: SCHEMA_VERSION });
+  });
+}
+
+function getDeviceFormOptions(token) {
+  return _invokeController_(function () {
+    return Utils.success(Config.getDeviceFormOptions(token));
+  });
+}
+
+function listDevices(token, filter, page) {
+  return _invokeController_(function () {
+    return Utils.success(Device.listDevices(token, filter, page));
+  });
+}
+
+function getDeviceDetail(token, id) {
+  return _invokeController_(function () {
+    return Utils.success(Device.getDeviceDetail(token, id));
+  });
+}
+
+function createDevice(token, data) {
+  return _invokeController_(function () {
+    return Utils.success(Device.createDevice(token, data));
+  });
+}
+
+function updateDevice(token, id, data) {
+  return _invokeController_(function () {
+    return Utils.success(Device.updateDevice(token, id, data));
   });
 }

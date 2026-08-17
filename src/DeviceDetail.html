@@ -1,0 +1,104 @@
+<div class="panel">
+  <span class="link-back" id="devBackBtn">&laquo; Quay lại danh sách</span>
+  <h1 id="ddTitle">Thiết bị mới</h1>
+  <div id="devDetailError" class="error-text"></div>
+
+  <div class="tabs">
+    <button type="button" class="tab-btn active" data-tab="nhandang">Nhận dạng</button>
+    <button type="button" class="tab-btn" data-tab="sudung">Sử dụng</button>
+  </div>
+
+  <div class="tab-panel active" data-tab-panel="nhandang">
+    <div class="form-grid">
+      <div class="field full">
+        <label for="ddTenThietBi">Tên thiết bị *</label>
+        <input type="text" id="ddTenThietBi">
+      </div>
+      <div class="field">
+        <label for="ddLoai">Loại thiết bị</label>
+        <select id="ddLoai"><option value="">--</option></select>
+      </div>
+      <div class="field">
+        <label for="ddNhom">Nhóm thiết bị *</label>
+        <select id="ddNhom"><option value="">--</option></select>
+      </div>
+      <div class="field">
+        <label for="ddHang">Hãng sản xuất</label>
+        <select id="ddHang"><option value="">--</option></select>
+      </div>
+      <div class="field">
+        <label for="ddNuoc">Nước sản xuất</label>
+        <input type="text" id="ddNuoc">
+      </div>
+      <div class="field">
+        <label for="ddModel">Model</label>
+        <input type="text" id="ddModel">
+      </div>
+      <div class="field">
+        <label for="ddSerial">Serial</label>
+        <input type="text" id="ddSerial">
+      </div>
+      <div class="field">
+        <label for="ddNamSX">Năm sản xuất</label>
+        <input type="number" id="ddNamSX">
+      </div>
+      <div class="field">
+        <label for="ddPhanLoai">Phân loại pháp lý</label>
+        <select id="ddPhanLoai">
+          <option value="">--</option>
+          <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ddNCC">Nhà cung cấp</label>
+        <select id="ddNCC"><option value="">--</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" data-tab-panel="sudung">
+    <div class="form-grid">
+      <div class="field">
+        <label for="ddKhoaPhong">Khoa/phòng *</label>
+        <select id="ddKhoaPhong"><option value="">--</option></select>
+      </div>
+      <div class="field">
+        <label for="ddViTri">Vị trí *</label>
+        <select id="ddViTri"><option value="">--</option></select>
+      </div>
+      <div class="field">
+        <label for="ddNguoiPhuTrach">Người phụ trách *</label>
+        <select id="ddNguoiPhuTrach"><option value="">--</option></select>
+      </div>
+      <div class="field">
+        <label for="ddTinhTrang">Tình trạng kỹ thuật</label>
+        <select id="ddTinhTrang">
+          <option value="Chưa xác định">Chưa xác định</option>
+          <option value="Tốt">Tốt</option>
+          <option value="Cần theo dõi">Cần theo dõi</option>
+          <option value="Hỏng">Hỏng</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ddNgayDua">Ngày đưa vào sử dụng *</label>
+        <input type="date" id="ddNgayDua">
+      </div>
+      <div class="field">
+        <label for="ddHinhThuc">Hình thức mua sắm</label>
+        <input type="text" id="ddHinhThuc">
+      </div>
+      <div class="field">
+        <label for="ddBaoHanhBD">Ngày bắt đầu bảo hành</label>
+        <input type="date" id="ddBaoHanhBD">
+      </div>
+      <div class="field">
+        <label for="ddBaoHanhKT">Ngày hết bảo hành</label>
+        <input type="date" id="ddBaoHanhKT">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button id="devSaveBtn" style="width:auto;">Lưu</button>
+  </div>
+</div>

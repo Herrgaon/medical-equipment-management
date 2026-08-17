@@ -23,54 +23,65 @@
     </form>
   </div>
 
-  <div class="card" id="appCard" style="display:none;">
-    <h1>Quản lý Trang thiết bị Y tế — BVDK Đông Sơn</h1>
-    <div class="row"><span>Trạng thái</span><span id="status" class="status ok">Đã xác thực</span></div>
-    <div class="row"><span>Tên đăng nhập</span><span id="email">—</span></div>
-    <div class="row"><span>Họ tên</span><span id="hoTen">—</span></div>
-    <div class="row"><span>Vai trò</span><span id="vaiTro">—</span></div>
-    <div class="row"><span>Phạm vi khoa/phòng</span><span id="scope">—</span></div>
-    <div class="row"><span>Giờ server</span><span id="serverTime">—</span></div>
-    <button id="logoutBtn" class="secondary">Đăng xuất</button>
+  <div id="appShell" style="display:none;">
+    <div class="topbar">
+      <span class="who">
+        <strong id="whoName">—</strong> · <span id="whoRole">—</span> · <span id="whoScope">—</span>
+      </span>
+      <button id="logoutBtn" style="width:auto;">Đăng xuất</button>
+    </div>
+
+    <div id="view-devices">
+      <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+      <?!= include('Devices'); ?>
+    </div>
+    <div id="view-device-detail" style="display:none;">
+      <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+      <?!= include('DeviceDetail'); ?>
+    </div>
   </div>
 
   <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
   <?!= include('Shared_Scripts'); ?>
   <script>
-    // Sprint 1.1: trang chẩn đoán duy nhất, xác nhận pipeline login -> Core -> Auth -> Database
-    // hoạt động end-to-end trước khi xây Devices.html/DeviceDetail.html ở Sprint 1.2.
     var SESSION_STORAGE_KEY = 'qltbyt_session_token';
+    var formOptions = null;
+    var currentDeviceId = null; // null = đang tạo mới
+    var devicePage = 1;
+    var deviceTotal = 0;
+
+    function getToken() { return localStorage.getItem(SESSION_STORAGE_KEY); }
+
+    function showView(name) {
+      document.getElementById('view-devices').style.display = (name === 'devices') ? '' : 'none';
+      document.getElementById('view-device-detail').style.display = (name === 'detail') ? '' : 'none';
+    }
 
     function showApp(user) {
       document.getElementById('loginCard').style.display = 'none';
-      document.getElementById('appCard').style.display = '';
-      setText('email', user.tenDangNhap);
-      setText('hoTen', user.hoTen);
-      setText('vaiTro', user.vaiTro);
-      setText('scope', user.khoaPhongPhuTrach ? user.khoaPhongPhuTrach : 'Toàn viện');
+      document.getElementById('appShell').style.display = '';
+      setText('whoName', user.nickname || user.hoTen || user.tenDangNhap);
+      setText('whoRole', user.vaiTro || '');
+      setText('whoScope', user.khoaPhongPhuTrach ? user.khoaPhongPhuTrach : 'Toàn viện');
+      loadFormOptionsThenDevices();
     }
 
     function showLogin(errorMessage) {
       document.getElementById('loginCard').style.display = '';
-      document.getElementById('appCard').style.display = 'none';
+      document.getElementById('appShell').style.display = 'none';
       setText('loginError', errorMessage || '');
     }
 
     function tryResumeSession() {
-      var token = localStorage.getItem(SESSION_STORAGE_KEY);
+      var token = getToken();
       if (!token) { showLogin(); return; }
       google.script.run
         .withSuccessHandler(function (response) {
-          if (response && response.success) {
-            showApp(response.data);
-          } else {
-            localStorage.removeItem(SESSION_STORAGE_KEY);
-            showLogin();
-          }
+          if (response && response.success) showApp(response.data);
+          else { localStorage.removeItem(SESSION_STORAGE_KEY); showLogin(); }
         })
         .withFailureHandler(function () {
-          localStorage.removeItem(SESSION_STORAGE_KEY);
-          showLogin();
+          localStorage.removeItem(SESSION_STORAGE_KEY); showLogin();
         })
         .getCurrentUserInfo(token);
     }
@@ -82,7 +93,6 @@
       var btn = document.getElementById('loginBtn');
       btn.disabled = true;
       setText('loginError', '');
-
       google.script.run
         .withSuccessHandler(function (response) {
           btn.disabled = false;
@@ -101,17 +111,211 @@
     });
 
     document.getElementById('logoutBtn').addEventListener('click', function () {
-      var token = localStorage.getItem(SESSION_STORAGE_KEY);
+      var token = getToken();
       localStorage.removeItem(SESSION_STORAGE_KEY);
       showLogin();
       if (token) google.script.run.logout(token);
     });
 
-    callServer('ping',
-      function (data) { setText('serverTime', data.serverTime); },
-      function (err) { setText('serverTime', 'Lỗi: ' + err.message); }
-    );
+    // ---- Danh mục dùng chung cho filter + form ----
+    function fillSelect(selectEl, items, placeholder) {
+      selectEl.innerHTML = '';
+      var opt0 = document.createElement('option');
+      opt0.value = ''; opt0.textContent = placeholder;
+      selectEl.appendChild(opt0);
+      items.forEach(function (item) {
+        var opt = document.createElement('option');
+        opt.value = item.ID;
+        opt.textContent = item.TEN || item.MA || item.ID;
+        selectEl.appendChild(opt);
+      });
+    }
 
+    function loadFormOptionsThenDevices() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          formOptions = response.data;
+          fillSelect(document.getElementById('devFilterKhoaPhong'), formOptions.KHOA_PHONG, 'Tất cả khoa/phòng');
+          fillSelect(document.getElementById('devFilterNhom'), formOptions.NHOM_THIET_BI, 'Tất cả nhóm thiết bị');
+          fillSelect(document.getElementById('ddLoai'), formOptions.LOAI_THIET_BI, '--');
+          fillSelect(document.getElementById('ddNhom'), formOptions.NHOM_THIET_BI, '--');
+          fillSelect(document.getElementById('ddHang'), formOptions.HANG_SAN_XUAT, '--');
+          fillSelect(document.getElementById('ddNCC'), formOptions.NHA_CUNG_CAP, '--');
+          fillSelect(document.getElementById('ddKhoaPhong'), formOptions.KHOA_PHONG, '--');
+          fillSelect(document.getElementById('ddViTri'), formOptions.VI_TRI, '--');
+          fillSelect(document.getElementById('ddNguoiPhuTrach'), formOptions.NGUOI_PHU_TRACH, '--');
+          loadDevices();
+        })
+        .withFailureHandler(function (err) { setText('devListError', err && err.message ? err.message : String(err)); })
+        .getDeviceFormOptions(getToken());
+    }
+
+    // ---- Danh sách thiết bị ----
+    function loadDevices() {
+      var filter = {
+        keyword: document.getElementById('devSearchKeyword').value.trim(),
+        khoaPhongId: document.getElementById('devFilterKhoaPhong').value,
+        nhomThietBiId: document.getElementById('devFilterNhom').value
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          setText('devListError', '');
+          if (!response || !response.success) {
+            setText('devListError', response && response.error ? response.error.message : 'Không tải được danh sách.');
+            return;
+          }
+          renderDeviceList(response.data);
+        })
+        .withFailureHandler(function (err) { setText('devListError', err && err.message ? err.message : String(err)); })
+        .listDevices(getToken(), filter, devicePage);
+    }
+
+    function renderDeviceList(result) {
+      deviceTotal = result.total;
+      var tbody = document.getElementById('devListBody');
+      tbody.innerHTML = '';
+      result.items.forEach(function (device) {
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-id', device.ID);
+        var tdMa = document.createElement('td'); tdMa.textContent = device.MA_THIET_BI;
+        var tdTen = document.createElement('td'); tdTen.textContent = device.TEN_THIET_BI;
+        var tdKhoa = document.createElement('td'); tdKhoa.textContent = lookupLabel('KHOA_PHONG', device.KHOA_PHONG_ID);
+        var tdStatus = document.createElement('td');
+        var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = device.TRANG_THAI_QUAN_LY;
+        tdStatus.appendChild(badge);
+        tr.appendChild(tdMa); tr.appendChild(tdTen); tr.appendChild(tdKhoa); tr.appendChild(tdStatus);
+        tr.addEventListener('click', function () { openDeviceDetail(device.ID); });
+        tbody.appendChild(tr);
+      });
+      var totalPages = Math.max(1, Math.ceil(deviceTotal / 20));
+      setText('devPageInfo', 'Trang ' + devicePage + '/' + totalPages + ' — ' + deviceTotal + ' thiết bị');
+    }
+
+    function lookupLabel(categoryKey, id) {
+      if (!formOptions || !formOptions[categoryKey] || !id) return '';
+      var found = formOptions[categoryKey].filter(function (i) { return i.ID === id; })[0];
+      return found ? (found.TEN || found.MA || '') : '';
+    }
+
+    document.getElementById('devSearchBtn').addEventListener('click', function () { devicePage = 1; loadDevices(); });
+    document.getElementById('devFilterKhoaPhong').addEventListener('change', function () { devicePage = 1; loadDevices(); });
+    document.getElementById('devFilterNhom').addEventListener('change', function () { devicePage = 1; loadDevices(); });
+    document.getElementById('devPrevBtn').addEventListener('click', function () { if (devicePage > 1) { devicePage--; loadDevices(); } });
+    document.getElementById('devNextBtn').addEventListener('click', function () {
+      if (devicePage * 20 < deviceTotal) { devicePage++; loadDevices(); }
+    });
+    document.getElementById('devNewBtn').addEventListener('click', function () { openDeviceDetail(null); });
+    document.getElementById('devBackBtn').addEventListener('click', function () { showView('devices'); loadDevices(); });
+
+    // ---- Chi tiết / form thiết bị ----
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.querySelector('[data-tab-panel="' + btn.getAttribute('data-tab') + '"]').classList.add('active');
+      });
+    });
+
+    function clearDeviceForm() {
+      ['ddTenThietBi', 'ddNuoc', 'ddModel', 'ddSerial', 'ddNamSX', 'ddHinhThuc', 'ddNgayDua', 'ddBaoHanhBD', 'ddBaoHanhKT']
+        .forEach(function (id) { document.getElementById(id).value = ''; });
+      ['ddLoai', 'ddNhom', 'ddHang', 'ddNCC', 'ddKhoaPhong', 'ddViTri', 'ddNguoiPhuTrach', 'ddPhanLoai'].forEach(function (id) { document.getElementById(id).value = ''; });
+      document.getElementById('ddTinhTrang').value = 'Chưa xác định';
+    }
+
+    function fillDeviceForm(device) {
+      document.getElementById('ddTenThietBi').value = device.TEN_THIET_BI || '';
+      document.getElementById('ddLoai').value = device.LOAI_THIET_BI_ID || '';
+      document.getElementById('ddNhom').value = device.NHOM_THIET_BI_ID || '';
+      document.getElementById('ddHang').value = device.HANG_SAN_XUAT_ID || '';
+      document.getElementById('ddNuoc').value = device.NUOC_SAN_XUAT || '';
+      document.getElementById('ddModel').value = device.MODEL || '';
+      document.getElementById('ddSerial').value = device.SERIAL || '';
+      document.getElementById('ddNamSX').value = device.NAM_SAN_XUAT || '';
+      document.getElementById('ddPhanLoai').value = device.PHAN_LOAI || '';
+      document.getElementById('ddNCC').value = device.NHA_CUNG_CAP_ID || '';
+      document.getElementById('ddKhoaPhong').value = device.KHOA_PHONG_ID || '';
+      document.getElementById('ddViTri').value = device.VI_TRI_ID || '';
+      document.getElementById('ddNguoiPhuTrach').value = device.NGUOI_PHU_TRACH_ID || '';
+      document.getElementById('ddTinhTrang').value = device.TINH_TRANG_KY_THUAT || 'Chưa xác định';
+      document.getElementById('ddHinhThuc').value = device.HINH_THUC_MUA_SAM || '';
+      document.getElementById('ddNgayDua').value = (device.NGAY_DUA_VAO_SU_DUNG || '').toString().slice(0, 10);
+      document.getElementById('ddBaoHanhBD').value = (device.NGAY_BAT_DAU_BAO_HANH || '').toString().slice(0, 10);
+      document.getElementById('ddBaoHanhKT').value = (device.NGAY_HET_BAO_HANH || '').toString().slice(0, 10);
+    }
+
+    function openDeviceDetail(deviceId) {
+      currentDeviceId = deviceId;
+      setText('devDetailError', '');
+      showView('detail');
+      if (!deviceId) {
+        setText('ddTitle', 'Thiết bị mới');
+        clearDeviceForm();
+        return;
+      }
+      setText('ddTitle', 'Đang tải...');
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) {
+            setText('devDetailError', response && response.error ? response.error.message : 'Không tải được thiết bị.');
+            return;
+          }
+          setText('ddTitle', response.data.TEN_THIET_BI + ' (' + response.data.MA_THIET_BI + ')');
+          fillDeviceForm(response.data);
+        })
+        .withFailureHandler(function (err) { setText('devDetailError', err && err.message ? err.message : String(err)); })
+        .getDeviceDetail(getToken(), deviceId);
+    }
+
+    function readDeviceForm() {
+      return {
+        TEN_THIET_BI: document.getElementById('ddTenThietBi').value.trim(),
+        LOAI_THIET_BI_ID: document.getElementById('ddLoai').value,
+        NHOM_THIET_BI_ID: document.getElementById('ddNhom').value,
+        HANG_SAN_XUAT_ID: document.getElementById('ddHang').value,
+        NUOC_SAN_XUAT: document.getElementById('ddNuoc').value.trim(),
+        MODEL: document.getElementById('ddModel').value.trim(),
+        SERIAL: document.getElementById('ddSerial').value.trim(),
+        NAM_SAN_XUAT: document.getElementById('ddNamSX').value,
+        PHAN_LOAI: document.getElementById('ddPhanLoai').value,
+        NHA_CUNG_CAP_ID: document.getElementById('ddNCC').value,
+        KHOA_PHONG_ID: document.getElementById('ddKhoaPhong').value,
+        VI_TRI_ID: document.getElementById('ddViTri').value,
+        NGUOI_PHU_TRACH_ID: document.getElementById('ddNguoiPhuTrach').value,
+        TINH_TRANG_KY_THUAT: document.getElementById('ddTinhTrang').value,
+        HINH_THUC_MUA_SAM: document.getElementById('ddHinhThuc').value.trim(),
+        NGAY_DUA_VAO_SU_DUNG: document.getElementById('ddNgayDua').value,
+        NGAY_BAT_DAU_BAO_HANH: document.getElementById('ddBaoHanhBD').value,
+        NGAY_HET_BAO_HANH: document.getElementById('ddBaoHanhKT').value
+      };
+    }
+
+    document.getElementById('devSaveBtn').addEventListener('click', function () {
+      var data = readDeviceForm();
+      var btn = document.getElementById('devSaveBtn');
+      btn.disabled = true;
+      setText('devDetailError', '');
+      var onDone = function (response) {
+        btn.disabled = false;
+        if (!response || !response.success) {
+          setText('devDetailError', response && response.error ? response.error.message : 'Lưu thất bại.');
+          return;
+        }
+        showView('devices');
+        loadDevices();
+      };
+      var onFail = function (err) { btn.disabled = false; setText('devDetailError', err && err.message ? err.message : String(err)); };
+
+      if (currentDeviceId) {
+        google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).updateDevice(getToken(), currentDeviceId, data);
+      } else {
+        google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).createDevice(getToken(), data);
+      }
+    });
+
+    callServer('ping', function () {}, function () {});
     tryResumeSession();
   </script>
 </body>

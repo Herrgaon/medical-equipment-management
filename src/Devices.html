@@ -1,0 +1,21 @@
+<div class="panel">
+  <div class="toolbar">
+    <input type="text" id="devSearchKeyword" placeholder="Tìm tên / mã / serial...">
+    <select id="devFilterKhoaPhong"><option value="">Tất cả khoa/phòng</option></select>
+    <select id="devFilterNhom"><option value="">Tất cả nhóm thiết bị</option></select>
+    <button id="devSearchBtn">Tìm</button>
+    <button id="devNewBtn">+ Thêm thiết bị</button>
+  </div>
+  <div id="devListError" class="error-text"></div>
+  <table class="data">
+    <thead>
+      <tr><th>Mã TB</th><th>Tên thiết bị</th><th>Khoa/phòng</th><th>Trạng thái</th></tr>
+    </thead>
+    <tbody id="devListBody"></tbody>
+  </table>
+  <div class="pagination">
+    <span id="devPageInfo"></span>
+    <button id="devPrevBtn">&laquo; Trước</button>
+    <button id="devNextBtn">Sau &raquo;</button>
+  </div>
+</div>
