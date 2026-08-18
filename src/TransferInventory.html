@@ -1,0 +1,54 @@
+<div class="panel">
+  <h1>Điều chuyển &amp; Kiểm kê</h1>
+  <div class="tabs">
+    <button type="button" class="ti-tab-btn active" data-titab="transfer">Điều chuyển</button>
+    <button type="button" class="ti-tab-btn" data-titab="inventory">Kiểm kê</button>
+  </div>
+
+  <!-- Điều chuyển -->
+  <div class="tab-panel active" data-ti-panel="transfer">
+    <div id="trfError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị</label><select id="trfDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <div id="trfForm" style="display:none;">
+      <div class="form-grid">
+        <div class="field"><label>Khoa/phòng mới *</label><select id="trfKhoaPhongMoi"><option value="">--</option></select></div>
+        <div class="field"><label>Vị trí mới</label><select id="trfViTriMoi"><option value="">--</option></select></div>
+        <div class="field full"><label>Lý do</label><input type="text" id="trfLyDo"></div>
+      </div>
+      <button id="trfSubmitBtn" style="width:auto;">Tạo yêu cầu điều chuyển</button>
+      <h2>Lịch sử điều chuyển thiết bị này</h2>
+      <table class="data"><thead><tr><th>Khoa/phòng mới</th><th>Trạng thái</th><th>Người duyệt</th></tr></thead><tbody id="trfHistoryBody"></tbody></table>
+    </div>
+
+    <h2 style="margin-top:24px;">Chờ duyệt</h2>
+    <table class="data"><thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th>Lý do</th><th></th></tr></thead><tbody id="trfApproveBody"></tbody></table>
+
+    <h2 style="margin-top:24px;">Đã duyệt — chờ khoa/phòng mới xác nhận đã nhận</h2>
+    <table class="data"><thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th>Lý do</th><th></th></tr></thead><tbody id="trfConfirmBody"></tbody></table>
+  </div>
+
+  <!-- Kiểm kê -->
+  <div class="tab-panel" data-ti-panel="inventory">
+    <div id="invError" class="error-text"></div>
+    <div id="invStartSection">
+      <button id="invStartBtn" style="width:auto;">Bắt đầu đợt kiểm kê mới</button>
+    </div>
+    <div id="invScanSection" style="display:none;">
+      <p class="hint-text">Mã đợt: <strong id="invSessionId"></strong></p>
+      <div class="form-grid">
+        <div class="field"><label>Thiết bị</label><select id="invDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+        <div class="field"><label>Vị trí thực tế quét được</label><select id="invViTriQuet"><option value="">--</option></select></div>
+        <div class="field"><label>Kết quả *</label>
+          <select id="invKetQua">
+            <option value="Có mặt">Có mặt</option><option value="Không tìm thấy">Không tìm thấy</option>
+            <option value="Sai vị trí">Sai vị trí</option><option value="Đang sửa chữa">Đang sửa chữa</option>
+            <option value="Đã điều chuyển">Đã điều chuyển</option><option value="Khác">Khác</option>
+          </select>
+        </div>
+      </div>
+      <button id="invScanBtn" style="width:auto;">Ghi nhận</button>
+      <h2>Kết quả đợt này</h2>
+      <table class="data"><thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th>Vị trí quét</th><th>Kết quả</th></tr></thead><tbody id="invResultsBody"></tbody></table>
+    </div>
+  </div>
+</div>

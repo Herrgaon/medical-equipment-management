@@ -77,6 +77,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('IncidentRepair'); ?>
       </div>
+      <div id="view-transferinventory" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('TransferInventory'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -127,6 +131,7 @@
         else if (view === 'warranty') { showView('warranty'); loadWarrantyDeviceOptions(); }
         else if (view === 'techassurance') { showView('techassurance'); openTechAssurance(btn.getAttribute('data-type'), btn.getAttribute('data-label')); }
         else if (view === 'incidentrepair') { showView('incidentrepair'); openIncidentRepairTab(btn.getAttribute('data-label')); }
+        else if (view === 'transferinventory') { showView('transferinventory'); openTransferInventoryTab(btn.getAttribute('data-label')); }
         else if (view === 'stub') { setText('stubTitle', btn.getAttribute('data-label')); showView('stub'); }
       });
     });
@@ -1039,6 +1044,226 @@
         })
         .withFailureHandler(function (err) { setText('maintError', err && err.message ? err.message : String(err)); })
         .confirmMaintenanceSafety(getToken(), maintenanceId, decision);
+    }
+
+    // ================= Điều chuyển / Kiểm kê =================
+    document.querySelectorAll('.ti-tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { activateTiTab(btn.getAttribute('data-titab')); });
+    });
+
+    function activateTiTab(tabKey) {
+      document.querySelectorAll('.ti-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('[data-ti-panel]').forEach(function (p) { p.classList.remove('active'); });
+      document.querySelector('.ti-tab-btn[data-titab="' + tabKey + '"]').classList.add('active');
+      document.querySelector('[data-ti-panel="' + tabKey + '"]').classList.add('active');
+      if (tabKey === 'transfer') { loadTransferDeviceOptions(); loadPendingTransfers(); }
+      else if (tabKey === 'inventory') { /* chờ bấm "Bắt đầu đợt kiểm kê" */ }
+    }
+
+    function openTransferInventoryTab(label) {
+      activateTiTab(label === 'Kiểm kê' ? 'inventory' : 'transfer');
+    }
+
+    // ---- Điều chuyển ----
+    function loadTransferDeviceOptions() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('trfError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var sel = document.getElementById('trfDeviceSelect');
+          sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+          response.data.forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI + ' (' + d.TRANG_THAI_QUAN_LY + ')';
+            sel.appendChild(opt);
+          });
+          if (formOptions) {
+            fillSelect(document.getElementById('trfKhoaPhongMoi'), formOptions.KHOA_PHONG, '--');
+            fillSelect(document.getElementById('trfViTriMoi'), formOptions.VI_TRI, '--');
+          }
+        })
+        .withFailureHandler(function (err) { setText('trfError', err && err.message ? err.message : String(err)); })
+        .listActiveDevicesForTransfer(getToken());
+    }
+
+    document.getElementById('trfDeviceSelect').addEventListener('change', function () {
+      document.getElementById('trfForm').style.display = this.value ? '' : 'none';
+      if (this.value) loadTransferHistory(this.value);
+    });
+
+    function loadTransferHistory(deviceId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('trfHistoryBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (t) {
+            var tr = document.createElement('tr');
+            var tdKhoa = document.createElement('td'); tdKhoa.textContent = lookupLabel('KHOA_PHONG', t.KHOA_PHONG_MOI_ID);
+            var tdStatus = document.createElement('td'); tdStatus.textContent = t.TRANG_THAI;
+            var tdDuyet = document.createElement('td'); tdDuyet.textContent = t.NGUOI_DUYET || '';
+            [tdKhoa, tdStatus, tdDuyet].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listTransfersByDevice(getToken(), deviceId);
+    }
+
+    document.getElementById('trfSubmitBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('trfDeviceSelect').value;
+      if (!deviceId) return;
+      var data = {
+        KHOA_PHONG_MOI_ID: document.getElementById('trfKhoaPhongMoi').value,
+        VI_TRI_MOI_ID: document.getElementById('trfViTriMoi').value,
+        LY_DO: document.getElementById('trfLyDo').value.trim()
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('trfError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+          setText('trfError', '');
+          document.getElementById('trfLyDo').value = '';
+          loadTransferHistory(deviceId);
+          loadPendingTransfers();
+        })
+        .withFailureHandler(function (err) { setText('trfError', err && err.message ? err.message : String(err)); })
+        .createTransfer(getToken(), deviceId, data);
+    });
+
+    function loadPendingTransfers() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('trfApproveBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (t) {
+            var tr = document.createElement('tr');
+            var tdMa = document.createElement('td'); tdMa.textContent = t.MA_THIET_BI;
+            var tdTen = document.createElement('td'); tdTen.textContent = t.TEN_THIET_BI;
+            var tdLyDo = document.createElement('td'); tdLyDo.textContent = t.LY_DO || '';
+            var tdAction = document.createElement('td');
+            var btn = document.createElement('button'); btn.textContent = 'Duyệt'; btn.style.width = 'auto';
+            btn.addEventListener('click', function () { approveTransferAction(t.ID); });
+            tdAction.appendChild(btn);
+            [tdMa, tdTen, tdLyDo, tdAction].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listPendingTransfers(getToken(), 'APPROVE');
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('trfConfirmBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (t) {
+            var tr = document.createElement('tr');
+            var tdMa = document.createElement('td'); tdMa.textContent = t.MA_THIET_BI;
+            var tdTen = document.createElement('td'); tdTen.textContent = t.TEN_THIET_BI;
+            var tdLyDo = document.createElement('td'); tdLyDo.textContent = t.LY_DO || '';
+            var tdAction = document.createElement('td');
+            var btn = document.createElement('button'); btn.textContent = 'Xác nhận đã nhận'; btn.style.width = 'auto';
+            btn.addEventListener('click', function () { confirmTransferAction(t.ID); });
+            tdAction.appendChild(btn);
+            [tdMa, tdTen, tdLyDo, tdAction].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listPendingTransfers(getToken(), 'CONFIRM');
+    }
+
+    function approveTransferAction(transferId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('trfError', response && response.error ? response.error.message : 'Thất bại.'); return; }
+          setText('trfError', '');
+          loadPendingTransfers();
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('trfError', err && err.message ? err.message : String(err)); })
+        .approveTransfer(getToken(), transferId);
+    }
+
+    function confirmTransferAction(transferId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('trfError', response && response.error ? response.error.message : 'Thất bại.'); return; }
+          setText('trfError', '');
+          loadPendingTransfers();
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('trfError', err && err.message ? err.message : String(err)); })
+        .confirmTransferReceived(getToken(), transferId);
+    }
+
+    // ---- Kiểm kê ----
+    var currentInventorySessionId = null;
+
+    document.getElementById('invStartBtn').addEventListener('click', function () {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('invError', response && response.error ? response.error.message : 'Lỗi.'); return; }
+          currentInventorySessionId = response.data.sessionId;
+          setText('invSessionId', currentInventorySessionId);
+          document.getElementById('invStartSection').style.display = 'none';
+          document.getElementById('invScanSection').style.display = '';
+          loadInventoryDeviceOptions();
+        })
+        .withFailureHandler(function (err) { setText('invError', err && err.message ? err.message : String(err)); })
+        .startInventorySession(getToken());
+    });
+
+    function loadInventoryDeviceOptions() {
+      var sel = document.getElementById('invDeviceSelect');
+      sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          response.data.forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI;
+            sel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listActiveDevicesForTransfer(getToken());
+      if (formOptions) fillSelect(document.getElementById('invViTriQuet'), formOptions.VI_TRI, '--');
+    }
+
+    document.getElementById('invScanBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('invDeviceSelect').value;
+      if (!deviceId || !currentInventorySessionId) return;
+      var data = {
+        VI_TRI_QUET: document.getElementById('invViTriQuet').value,
+        KET_QUA: document.getElementById('invKetQua').value
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('invError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+          setText('invError', response.data.locationMismatch ? 'Lưu ý: vị trí quét khác vị trí ghi trong hệ thống.' : '');
+          loadInventoryResults();
+        })
+        .withFailureHandler(function (err) { setText('invError', err && err.message ? err.message : String(err)); })
+        .scanInventoryDevice(getToken(), currentInventorySessionId, deviceId, data);
+    });
+
+    function loadInventoryResults() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('invResultsBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (r) {
+            var tr = document.createElement('tr');
+            var tdMa = document.createElement('td'); tdMa.textContent = r.MA_THIET_BI;
+            var tdTen = document.createElement('td'); tdTen.textContent = r.TEN_THIET_BI;
+            var tdVt = document.createElement('td'); tdVt.textContent = lookupLabel('VI_TRI', r.VI_TRI_QUET);
+            var tdKq = document.createElement('td'); tdKq.textContent = r.KET_QUA;
+            [tdMa, tdTen, tdVt, tdKq].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .getInventorySessionResults(getToken(), currentInventorySessionId);
     }
 
     // ================= Import Excel =================

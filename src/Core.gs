@@ -19,7 +19,9 @@
  * submitTechAssuranceResult, listActiveDevicesForIncident, createIncident, listIncidentsByDevice,
  * createRepair, markRepairDone, confirmRepairSafety, listRepairsByDevice,
  * listRepairsAwaitingConfirm, createMaintenance, markMaintenanceDone, confirmMaintenanceSafety,
- * listMaintenanceByDevice, listMaintenanceAwaitingConfirm.
+ * listMaintenanceByDevice, listMaintenanceAwaitingConfirm, listActiveDevicesForTransfer,
+ * createTransfer, approveTransfer, confirmTransferReceived, listTransfersByDevice,
+ * listPendingTransfers, startInventorySession, scanInventoryDevice, getInventorySessionResults.
  */
 
 function doGet(e) {
@@ -204,6 +206,42 @@ function listTechAssuranceByDevice(token, typeKey, deviceId) {
 
 function submitTechAssuranceResult(token, typeKey, deviceId, data) {
   return _invokeController_(function () { return Utils.success(InspectionCalibration.submitResult(token, typeKey, deviceId, data)); });
+}
+
+function listActiveDevicesForTransfer(token) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.listActiveDevices(token)); });
+}
+
+function createTransfer(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.createTransfer(token, deviceId, data)); });
+}
+
+function approveTransfer(token, transferId) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.approveTransfer(token, transferId)); });
+}
+
+function confirmTransferReceived(token, transferId) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.confirmTransferReceived(token, transferId)); });
+}
+
+function listTransfersByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.listTransfersByDevice(token, deviceId)); });
+}
+
+function listPendingTransfers(token, stage) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.listPendingTransfers(token, stage)); });
+}
+
+function startInventorySession(token) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.startInventorySession(token)); });
+}
+
+function scanInventoryDevice(token, sessionId, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.scanDevice(token, sessionId, deviceId, data)); });
+}
+
+function getInventorySessionResults(token, sessionId) {
+  return _invokeController_(function () { return Utils.success(TransferInventory.getSessionResults(token, sessionId)); });
 }
 
 function listWarrantyByDevice(token, deviceId) {
