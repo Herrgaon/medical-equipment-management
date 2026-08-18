@@ -1,10 +1,5 @@
 {
   "timeZone": "Asia/Ho_Chi_Minh",
-  "dependencies": {
-    "enabledAdvancedServices": [
-      { "userSymbol": "Drive", "version": "v3", "serviceId": "drive" }
-    ]
-  },
   "runtimeVersion": "V8",
   "exceptionLogging": "STACKDRIVER",
   "webapp": {

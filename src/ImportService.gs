@@ -1,7 +1,11 @@
 /**
  * Import Excel danh sách thiết bị hàng loạt (mục 11 tài liệu thiết kế).
- * Apps Script không có bộ đọc .xlsx sẵn — chuyển đổi qua Google Sheet tạm bằng Drive API rồi đọc,
- * xoá file tạm ngay sau đó (kể cả khi lỗi, dùng finally).
+ * Apps Script không có bộ đọc .xlsx sẵn — .xlsx thực chất là 1 file ZIP chứa các file XML (Office
+ * Open XML), đọc trực tiếp bằng Utilities.unzip() + XmlService (dịch vụ có sẵn, KHÔNG cần Advanced
+ * Service/Drive API) thay vì nhờ Drive chuyển đổi sang Google Sheet tạm rồi đọc lại như cách làm
+ * ban đầu — cách cũ từng gây lỗi hệ thống chung chung do Drive API khai trong appsscript.json qua
+ * clasp push nhưng chưa chắc đã được bật thật trên Google Cloud Project (xem CLAUDE.md). Cách mới
+ * không tạo/xoá file tạm nào trên Drive, không phụ thuộc cấu hình Cloud ngoài code.
  *
  * Luồng: previewExcel() đọc + validate, trả về dòng hợp lệ/dòng lỗi cho client xem trước —
  * CHƯA ghi gì vào 01_THIET_BI. confirmImport() nhận lại đúng các dòng hợp lệ đó (client tự gửi
@@ -119,6 +123,14 @@ var Import = {
     return index;
   },
 
+  /** .xlsx thực chất là 1 file ZIP chứa các file XML (Office Open XML). Đọc trực tiếp bằng
+   * Utilities.unzip() + XmlService (2 dịch vụ có sẵn của Apps Script, không cần Advanced Service/
+   * Drive API) thay vì nhờ Drive chuyển đổi sang Google Sheet tạm rồi đọc lại — bỏ hẳn phụ thuộc
+   * vào việc Drive API đã được bật trên Google Cloud Project hay chưa (nguồn gốc 1 lỗi khó chẩn
+   * đoán đã gặp: Drive.Files.create() báo lỗi hệ thống chung chung khi Advanced Service khai trong
+   * appsscript.json qua clasp push nhưng chưa được bật thật trên Cloud). Không tạo/xoá file tạm
+   * nào trên Drive nữa — không còn rủi ro rác file hay lỗi do quyền Drive.
+   */
   _parseExcelToRows_: function (base64Data, fileName) {
     Utils.assert(!Utils.isBlank(base64Data), ERROR_CODES.VALIDATION_ERROR, 'Thiếu dữ liệu file.');
     Utils.assert(/\.xlsx$/i.test(fileName || ''), ERROR_CODES.VALIDATION_ERROR, 'Chỉ chấp nhận file .xlsx.');
@@ -127,33 +139,132 @@ var Import = {
     Utils.assert(bytes.length <= IMPORT_MAX_FILE_BYTES, ERROR_CODES.VALIDATION_ERROR,
       'File vượt quá giới hạn ' + Math.round(IMPORT_MAX_FILE_BYTES / 1024 / 1024) + 'MB.');
 
-    var blob = Utilities.newBlob(bytes, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', fileName);
-    var tempFile = null;
+    var zipBlob = Utilities.newBlob(bytes, 'application/zip', fileName);
+    var entries;
     try {
-      tempFile = Drive.Files.create({ name: '_import_tmp_' + Utilities.getUuid(), mimeType: MimeType.GOOGLE_SHEETS }, blob);
-      var tempSs = SpreadsheetApp.openById(tempFile.id);
-      var sheet = tempSs.getSheets()[0];
-      var lastRow = sheet.getLastRow();
-      var lastCol = sheet.getLastColumn();
-      if (lastRow < 1 || lastCol < 1) return { header: [], rows: [] };
-
-      var values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
-      var header = values[0].map(function (h) { return String(h).trim(); });
-      var rows = values.slice(1).filter(function (r) { return r.some(function (c) { return !Utils.isBlank(c); }); });
-      return { header: header, rows: rows };
-    } finally {
-      // Luôn xoá file tạm kể cả khi đọc lỗi — không để rác trên Drive. Drive.Files.remove() —
-      // Apps Script Advanced Drive Service đặt tên là remove(), KHÔNG phải delete() (delete từng
-      // là từ khoá dành riêng ở engine JS cũ Apps Script dùng trước khi chuyển sang V8).
-      if (tempFile) {
-        try { Drive.Files.remove(tempFile.id); } catch (e) { /* đã cố gắng dọn, không chặn luồng chính vì lỗi dọn dẹp */ }
-      }
+      entries = Utilities.unzip(zipBlob);
+    } catch (e) {
+      throw new AppError(ERROR_CODES.VALIDATION_ERROR, 'File không đúng định dạng .xlsx (không giải nén được — có thể file bị hỏng hoặc không phải .xlsx thật).');
     }
+
+    var filesByName = {};
+    entries.forEach(function (b) { filesByName[b.getName()] = b; });
+
+    var sharedStrings = [];
+    if (filesByName['xl/sharedStrings.xml']) {
+      sharedStrings = this._parseSharedStrings_(filesByName['xl/sharedStrings.xml'].getDataAsString('UTF-8'));
+    }
+
+    // Luôn đọc sheet1.xml (sheet đầu tiên) — đúng với giả định gốc "1 sheet duy nhất" khi dùng
+    // getSheets()[0] trước đây; đủ cho template chuẩn của hệ thống lẫn file danh mục thiết bị thật.
+    var sheetFile = filesByName['xl/worksheets/sheet1.xml'];
+    Utils.assert(sheetFile, ERROR_CODES.VALIDATION_ERROR, 'Không đọc được nội dung sheet trong file .xlsx.');
+
+    var grid = this._parseSheetXml_(sheetFile.getDataAsString('UTF-8'), sharedStrings);
+    if (grid.length === 0) return { header: [], rows: [] };
+
+    var header = grid[0].map(function (h) { return String(h).trim(); });
+    var rows = grid.slice(1).filter(function (r) { return r.some(function (c) { return !Utils.isBlank(c); }); });
+    return { header: header, rows: rows };
+  },
+
+  /** <si> có thể chứa 1 <t> đơn (chuỗi thường) hoặc nhiều <r><t> (rich text nhiều định dạng trong
+   * cùng 1 ô) — gom hết text con (bất kể độ sâu) rồi nối lại, đúng ngữ nghĩa nội dung hiển thị. */
+  _collectText_: function (element, out) {
+    if (element.getName() === 't') {
+      out.push(element.getText());
+      return;
+    }
+    var children = element.getChildren();
+    for (var i = 0; i < children.length; i++) this._collectText_(children[i], out);
+  },
+
+  _parseSharedStrings_: function (xml) {
+    var self = this;
+    var root = XmlService.parse(xml).getRootElement();
+    var ns = root.getNamespace();
+    return root.getChildren('si', ns).map(function (si) {
+      var out = [];
+      self._collectText_(si, out);
+      return out.join('');
+    });
+  },
+
+  _cellRefToCol0_: function (ref) {
+    var colLetters = ref.replace(/[0-9]/g, '');
+    var n = 0;
+    for (var i = 0; i < colLetters.length; i++) n = n * 26 + (colLetters.charCodeAt(i) - 64);
+    return n - 1; // 0-based
+  },
+
+  /** Đọc <sheetData> thành mảng 2 chiều (giống SpreadsheetApp getValues()) — kể cả ô trống xen
+   * giữa (Excel bỏ qua <c> không có giá trị) và dòng trống hoàn toàn bị Excel lược khỏi XML. */
+  _parseSheetXml_: function (xml, sharedStrings) {
+    var self = this;
+    var root = XmlService.parse(xml).getRootElement();
+    var ns = root.getNamespace();
+    var sheetData = root.getChild('sheetData', ns);
+    if (!sheetData) return [];
+
+    var grid = [];
+    sheetData.getChildren('row', ns).forEach(function (rowEl) {
+      var rAttr = rowEl.getAttribute('r');
+      var rowNum = rAttr ? parseInt(rAttr.getValue(), 10) : (grid.length + 1);
+      while (grid.length < rowNum - 1) grid.push([]); // dòng trống hoàn toàn Excel lược khỏi XML
+
+      var sparse = {};
+      var maxCol = -1;
+      rowEl.getChildren('c', ns).forEach(function (c) {
+        var refAttr = c.getAttribute('r');
+        var colIdx = refAttr ? self._cellRefToCol0_(refAttr.getValue()) : (maxCol + 1);
+        var typeAttr = c.getAttribute('t');
+        var type = typeAttr ? typeAttr.getValue() : null;
+        var value = '';
+
+        if (type === 'inlineStr') {
+          var isEl = c.getChild('is', ns);
+          if (isEl) { var out = []; self._collectText_(isEl, out); value = out.join(''); }
+        } else {
+          var vEl = c.getChild('v', ns);
+          var raw = vEl ? vEl.getText() : '';
+          if (raw === '') {
+            value = '';
+          } else if (type === 's') {
+            value = sharedStrings[parseInt(raw, 10)] || '';
+          } else if (type === 'str' || type === 'b') {
+            value = raw;
+          } else {
+            value = Number(raw); // không có t = số (có thể là ngày dạng Excel serial number)
+          }
+        }
+
+        sparse[colIdx] = value;
+        if (colIdx > maxCol) maxCol = colIdx;
+      });
+
+      var denseRow = [];
+      for (var i = 0; i <= maxCol; i++) denseRow.push(sparse.hasOwnProperty(i) ? sparse[i] : '');
+      grid.push(denseRow);
+    });
+
+    var maxLen = 0;
+    grid.forEach(function (r) { if (r.length > maxLen) maxLen = r.length; });
+    grid.forEach(function (r) { while (r.length < maxLen) r.push(''); });
+    return grid;
+  },
+
+  /** Excel/Lotus lưu ngày dạng số ngày kể từ mốc 1899-12-30 (không phải 1899-12-31 — Lotus 1-2-3
+   * cố tình để lỗi năm nhuận 1900 và Excel giữ nguyên để tương thích ngược, công thức chuẩn quy
+   * đổi sang mili-giây Unix đã trừ sẵn phần lệch này). SpreadsheetApp.getValues() trước đây tự làm
+   * việc này khi đọc từ Google Sheet đã chuyển đổi; đọc XML thô thì phải tự quy đổi lấy. */
+  _excelSerialToDate_: function (serial) {
+    return new Date(Math.floor(serial - 25569) * 86400 * 1000);
   },
 
   _parseDateCell_: function (cell) {
     if (Utils.isBlank(cell)) return null;
     if (cell instanceof Date) return cell;
+    if (typeof cell === 'number') return this._excelSerialToDate_(cell);
     var parsed = new Date(cell);
     return isNaN(parsed.getTime()) ? undefined : parsed; // undefined = không parse được (khác null = trống)
   },
