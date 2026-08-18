@@ -9,7 +9,8 @@
  * có hàm nào tin vào bất kỳ thông tin "vai trò"/"quyền" nào client tự gửi lên.
  *
  * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping,
- * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice.
+ * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice,
+ * getDashboardSummary.
  */
 
 function doGet(e) {
@@ -101,5 +102,11 @@ function createDevice(token, data) {
 function updateDevice(token, id, data) {
   return _invokeController_(function () {
     return Utils.success(Device.updateDevice(token, id, data));
+  });
+}
+
+function getDashboardSummary(token) {
+  return _invokeController_(function () {
+    return Utils.success(Device.getDashboardSummary(token));
   });
 }

@@ -131,5 +131,21 @@ var Device = {
     var currentPage = page || 1;
     var start = (currentPage - 1) * pageSize;
     return { items: all.slice(start, start + pageSize), total: total, page: currentPage, pageSize: pageSize };
+  },
+
+  /** Số liệu tối thiểu cho Trang chủ Sprint 1.2 — Dashboard đầy đủ (cảnh báo, biểu đồ...) thuộc giai đoạn sau. */
+  getDashboardSummary: function (token) {
+    var auth = Auth.assertPermission(token, DEVICE_MODULE, 'VIEW');
+    var all = this._applyScopeFilter_(Database.list('01_THIET_BI', {}).items, auth.scope);
+    var countByStatus = {};
+    all.forEach(function (row) {
+      countByStatus[row.TRANG_THAI_QUAN_LY] = (countByStatus[row.TRANG_THAI_QUAN_LY] || 0) + 1;
+    });
+    return {
+      total: all.length,
+      dangSuDung: countByStatus[DEVICE_STATUS.DANG_SU_DUNG] || 0,
+      dangTiepNhan: countByStatus[DEVICE_STATUS.DANG_TIEP_NHAN] || 0,
+      tamNgung: countByStatus[DEVICE_STATUS.TAM_NGUNG_SU_DUNG] || 0
+    };
   }
 };
