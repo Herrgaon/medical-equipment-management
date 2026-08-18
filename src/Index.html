@@ -57,6 +57,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('QR'); ?>
       </div>
+      <div id="view-import" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('Import'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -274,6 +278,8 @@
     });
     document.getElementById('devNewBtn').addEventListener('click', function () { openDeviceDetail(null); });
     document.getElementById('devBackBtn').addEventListener('click', function () { showView('devices'); loadDevices(); });
+    document.getElementById('devImportBtn').addEventListener('click', function () { showView('import'); resetImportUI(); });
+    document.getElementById('importBackBtn').addEventListener('click', function () { showView('devices'); loadDevices(); });
 
     // ---- Chi tiết / form thiết bị ----
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -439,6 +445,119 @@
       } else {
         google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).createDevice(getToken(), data);
       }
+    });
+
+    // ================= Import Excel =================
+    var importValidRowsCache = [];
+
+    function resetImportUI() {
+      document.getElementById('importFileInput').value = '';
+      setText('importError', '');
+      document.getElementById('importStep1').style.display = '';
+      document.getElementById('importStep2').style.display = 'none';
+      document.getElementById('importStep3').style.display = 'none';
+      importValidRowsCache = [];
+    }
+    document.getElementById('importCancelBtn').addEventListener('click', resetImportUI);
+
+    function fileToBase64(file) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var result = reader.result; // "data:...;base64,XXXX"
+          resolve(result.substring(result.indexOf(',') + 1));
+        };
+        reader.onerror = function () { reject(reader.error); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.getElementById('importUploadBtn').addEventListener('click', function () {
+      var fileInput = document.getElementById('importFileInput');
+      var file = fileInput.files[0];
+      if (!file) { setText('importError', 'Chưa chọn file.'); return; }
+      var btn = document.getElementById('importUploadBtn');
+      btn.disabled = true;
+      setText('importError', '');
+
+      fileToBase64(file).then(function (base64Data) {
+        google.script.run
+          .withSuccessHandler(function (response) {
+            btn.disabled = false;
+            if (!response || !response.success) {
+              setText('importError', response && response.error ? response.error.message : 'Xử lý file thất bại.');
+              return;
+            }
+            renderImportPreview(response.data);
+          })
+          .withFailureHandler(function (err) { btn.disabled = false; setText('importError', err && err.message ? err.message : String(err)); })
+          .previewExcel(getToken(), base64Data, file.name);
+      }).catch(function (err) {
+        btn.disabled = false;
+        setText('importError', 'Không đọc được file: ' + err);
+      });
+    });
+
+    function renderImportPreview(data) {
+      importValidRowsCache = data.validRows;
+      document.getElementById('importStep1').style.display = 'none';
+      document.getElementById('importStep2').style.display = '';
+      setText('importTotalRows', data.totalRows);
+      setText('importValidRows', data.validRows.length);
+      setText('importErrorRows', data.errorRows.length);
+
+      var errorSection = document.getElementById('importErrorSection');
+      errorSection.style.display = data.errorRows.length ? '' : 'none';
+      var errorBody = document.getElementById('importErrorBody');
+      errorBody.innerHTML = '';
+      data.errorRows.forEach(function (r) {
+        var tr = document.createElement('tr');
+        var tdRow = document.createElement('td'); tdRow.textContent = r.rowNumber;
+        var tdTen = document.createElement('td'); tdTen.textContent = r.tenThietBi;
+        var tdErr = document.createElement('td'); tdErr.textContent = r.errors.join('; ');
+        tr.appendChild(tdRow); tr.appendChild(tdTen); tr.appendChild(tdErr);
+        errorBody.appendChild(tr);
+      });
+
+      var validBody = document.getElementById('importValidBody');
+      validBody.innerHTML = '';
+      data.validRows.forEach(function (r) {
+        var tr = document.createElement('tr');
+        var tdRow = document.createElement('td'); tdRow.textContent = r.rowNumber;
+        var tdTen = document.createElement('td'); tdTen.textContent = r.TEN_THIET_BI;
+        var tdSerial = document.createElement('td'); tdSerial.textContent = r.SERIAL;
+        tr.appendChild(tdRow); tr.appendChild(tdTen); tr.appendChild(tdSerial);
+        validBody.appendChild(tr);
+      });
+
+      document.getElementById('importConfirmBtn').disabled = data.validRows.length === 0;
+    }
+
+    document.getElementById('importConfirmBtn').addEventListener('click', function () {
+      if (!importValidRowsCache.length) return;
+      var btn = document.getElementById('importConfirmBtn');
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (response) {
+          btn.disabled = false;
+          document.getElementById('importStep2').style.display = 'none';
+          document.getElementById('importStep3').style.display = '';
+          if (!response || !response.success) {
+            setText('importResultTitle', 'Nhập thất bại');
+            setText('importResultDetail', response && response.error ? response.error.message : 'Lỗi không xác định.');
+            return;
+          }
+          setText('importResultTitle', 'Đã nhập ' + response.data.insertedCount + ' thiết bị');
+          setText('importResultDetail', response.data.failedRows.length
+            ? response.data.failedRows.length + ' dòng lỗi khi ghi (hiếm gặp — có thể do trùng dữ liệu vừa phát sinh): ' +
+              response.data.failedRows.map(function (f) { return 'dòng ' + f.rowNumber + ': ' + f.message; }).join('; ')
+            : 'Không có lỗi.');
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          setText('importError', err && err.message ? err.message : String(err));
+        })
+        .confirmImport(getToken(), importValidRowsCache);
     });
 
     // ================= Quản trị hệ thống =================

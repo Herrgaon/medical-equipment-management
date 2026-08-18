@@ -1,6 +1,10 @@
 {
   "timeZone": "Asia/Ho_Chi_Minh",
-  "dependencies": {},
+  "dependencies": {
+    "enabledAdvancedServices": [
+      { "userSymbol": "Drive", "version": "v3", "serviceId": "drive" }
+    ]
+  },
   "runtimeVersion": "V8",
   "exceptionLogging": "STACKDRIVER",
   "webapp": {
@@ -8,6 +12,7 @@
     "access": "ANYONE_ANONYMOUS"
   },
   "oauthScopes": [
-    "https://www.googleapis.com/auth/spreadsheets.currentonly"
+    "https://www.googleapis.com/auth/spreadsheets.currentonly",
+    "https://www.googleapis.com/auth/drive.file"
   ]
 }

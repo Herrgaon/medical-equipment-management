@@ -1,0 +1,49 @@
+<div class="panel">
+  <span class="link-back" id="importBackBtn">&laquo; Quay lại danh sách</span>
+  <h1>Import Excel — danh sách thiết bị</h1>
+
+  <div id="importStep1">
+    <p class="hint-text">
+      File .xlsx, dòng đầu tiên là tiêu đề đúng tên cột (không phân biệt hoa/thường): <br>
+      <em>Tên thiết bị*, Nhóm thiết bị*, Loại thiết bị, Khoa/phòng*, Vị trí*, Người phụ trách*, Hãng sản xuất, Nước sản xuất, Model, Serial, Năm sản xuất, Phân loại, Nhà cung cấp, Tình trạng kỹ thuật, Ngày đưa vào sử dụng*, Hình thức mua sắm, Ngày bắt đầu bảo hành, Ngày hết bảo hành</em>
+      <br>(* bắt buộc). Các cột danh mục (Nhóm/Loại/Khoa-phòng/Vị trí/Hãng SX/Nhà cung cấp/Người phụ trách) phải khớp đúng tên đã có trong Quản trị &gt; Danh mục.
+    </p>
+    <input type="file" id="importFileInput" accept=".xlsx">
+    <div id="importError" class="error-text"></div>
+    <button id="importUploadBtn" style="width:auto;">Tải lên &amp; kiểm tra</button>
+  </div>
+
+  <div id="importStep2" style="display:none;">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-value" id="importTotalRows">0</div><div class="stat-label">Tổng số dòng</div></div>
+      <div class="stat-card"><div class="stat-value" id="importValidRows">0</div><div class="stat-label">Hợp lệ</div></div>
+      <div class="stat-card"><div class="stat-value" id="importErrorRows">0</div><div class="stat-label">Có lỗi (sẽ bị bỏ qua)</div></div>
+    </div>
+
+    <div id="importErrorSection" style="display:none;">
+      <h2>Dòng lỗi</h2>
+      <table class="data">
+        <thead><tr><th>Dòng</th><th>Tên thiết bị</th><th>Lỗi</th></tr></thead>
+        <tbody id="importErrorBody"></tbody>
+      </table>
+    </div>
+
+    <h2>Dòng hợp lệ — sẽ được nhập</h2>
+    <table class="data">
+      <thead><tr><th>Dòng</th><th>Tên thiết bị</th><th>Serial</th></tr></thead>
+      <tbody id="importValidBody"></tbody>
+    </table>
+
+    <div class="form-actions">
+      <button id="importConfirmBtn" style="width:auto;">Xác nhận nhập</button>
+      <button id="importCancelBtn" class="secondary" style="width:auto;">Huỷ, chọn file khác</button>
+    </div>
+  </div>
+
+  <div id="importStep3" style="display:none;">
+    <div class="stub-box">
+      <h2 id="importResultTitle">—</h2>
+      <p id="importResultDetail"></p>
+    </div>
+  </div>
+</div>

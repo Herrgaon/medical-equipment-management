@@ -11,7 +11,8 @@
  * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping,
  * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice,
  * getDashboardSummary, listCategoryItems, createCategoryItem, updateCategoryItem, listUsers,
- * listRoles, createUser, updateUser, resetUserPassword, getAuditLog, listAllForQr.
+ * listRoles, createUser, updateUser, resetUserPassword, getAuditLog, listAllForQr,
+ * previewExcel, confirmImport.
  */
 
 function doGet(e) {
@@ -112,6 +113,14 @@ function updateDevice(token, id, data) {
   return _invokeController_(function () {
     return Utils.success(Device.updateDevice(token, id, data));
   });
+}
+
+function previewExcel(token, base64Data, fileName) {
+  return _invokeController_(function () { return Utils.success(Import.previewExcel(token, base64Data, fileName)); });
+}
+
+function confirmImport(token, rows) {
+  return _invokeController_(function () { return Utils.success(Import.confirmImport(token, rows)); });
 }
 
 function listAllForQr(token) {
