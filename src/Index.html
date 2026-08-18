@@ -47,6 +47,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('DeviceDetail'); ?>
       </div>
+      <div id="view-admin" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('Admin'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -83,6 +87,7 @@
         var view = btn.getAttribute('data-view');
         if (view === 'devices') { showView('devices'); loadDevices(); }
         else if (view === 'dashboard') { showView('dashboard'); loadDashboard(); }
+        else if (view === 'admin') { showView('admin'); loadCategoryList(); }
         else if (view === 'stub') { setText('stubTitle', btn.getAttribute('data-label')); showView('stub'); }
       });
     });
@@ -359,6 +364,241 @@
         google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).createDevice(getToken(), data);
       }
     });
+
+    // ================= Quản trị hệ thống =================
+    var CATEGORY_LABELS = {
+      '02_LOAI_THIET_BI': 'Loại thiết bị', '03_NHOM_THIET_BI': 'Nhóm thiết bị', '04_KHOA_PHONG': 'Khoa/phòng',
+      '05_VI_TRI': 'Vị trí', '06_HANG_SAN_XUAT': 'Hãng sản xuất', '07_NUOC_SAN_XUAT': 'Nước sản xuất',
+      '08_NHA_CUNG_CAP': 'Nhà cung cấp', '09_NGUOI_PHU_TRACH': 'Người phụ trách'
+    };
+    var currentCategoryEditId = null;
+    var currentUserEditId = null;
+    var auditPage = 1;
+    var auditTotal = 0;
+
+    document.querySelectorAll('.admin-tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.admin-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('[data-admin-panel]').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var tab = btn.getAttribute('data-admintab');
+        document.querySelector('[data-admin-panel="' + tab + '"]').classList.add('active');
+        if (tab === 'category') loadCategoryList();
+        else if (tab === 'users') loadUserList();
+        else if (tab === 'audit') { auditPage = 1; loadAuditLog(); }
+      });
+    });
+
+    // ---- Danh mục ----
+    document.getElementById('catSelect').addEventListener('change', function () { resetCategoryForm(); loadCategoryList(); });
+
+    function resetCategoryForm() {
+      currentCategoryEditId = null;
+      document.getElementById('catFormMa').value = '';
+      document.getElementById('catFormTen').value = '';
+      document.getElementById('catFormMoTa').value = '';
+      document.getElementById('catCancelEditBtn').style.display = 'none';
+    }
+
+    function loadCategoryList() {
+      var tabName = document.getElementById('catSelect').value;
+      google.script.run
+        .withSuccessHandler(function (response) {
+          setText('catError', '');
+          if (!response || !response.success) { setText('catError', response && response.error ? response.error.message : 'Lỗi tải danh mục.'); return; }
+          var tbody = document.getElementById('catListBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (item) {
+            var tr = document.createElement('tr');
+            var tdMa = document.createElement('td'); tdMa.textContent = item.MA;
+            var tdTen = document.createElement('td'); tdTen.textContent = item.TEN;
+            var tdMoTa = document.createElement('td'); tdMoTa.textContent = item.MO_TA;
+            var tdStatus = document.createElement('td');
+            var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = item.TRANG_THAI;
+            tdStatus.appendChild(badge);
+            var tdAction = document.createElement('td');
+            var editBtn = document.createElement('button'); editBtn.textContent = 'Sửa'; editBtn.style.width = 'auto';
+            editBtn.addEventListener('click', function () { editCategoryItem(item); });
+            tdAction.appendChild(editBtn);
+            tr.appendChild(tdMa); tr.appendChild(tdTen); tr.appendChild(tdMoTa); tr.appendChild(tdStatus); tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('catError', err && err.message ? err.message : String(err)); })
+        .listCategoryItems(getToken(), tabName);
+    }
+
+    function editCategoryItem(item) {
+      currentCategoryEditId = item.ID;
+      document.getElementById('catFormMa').value = item.MA || '';
+      document.getElementById('catFormTen').value = item.TEN || '';
+      document.getElementById('catFormMoTa').value = item.MO_TA || '';
+      document.getElementById('catCancelEditBtn').style.display = '';
+    }
+    document.getElementById('catCancelEditBtn').addEventListener('click', resetCategoryForm);
+
+    document.getElementById('catSaveBtn').addEventListener('click', function () {
+      var tabName = document.getElementById('catSelect').value;
+      var data = {
+        MA: document.getElementById('catFormMa').value.trim(),
+        TEN: document.getElementById('catFormTen').value.trim(),
+        MO_TA: document.getElementById('catFormMoTa').value.trim()
+      };
+      var onDone = function (response) {
+        if (!response || !response.success) { setText('catError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+        resetCategoryForm();
+        loadCategoryList();
+        loadFormOptions(); // đồng bộ lại dropdown ở form Thiết bị
+      };
+      var onFail = function (err) { setText('catError', err && err.message ? err.message : String(err)); };
+      if (currentCategoryEditId) {
+        google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).updateCategoryItem(getToken(), tabName, currentCategoryEditId, data);
+      } else {
+        google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).createCategoryItem(getToken(), tabName, data);
+      }
+    });
+
+    // ---- Người dùng ----
+    var rolesCache = [];
+    function roleName(vaiTroId) {
+      var found = rolesCache.filter(function (r) { return r.id === vaiTroId; })[0];
+      return found ? found.ten : '';
+    }
+    function loadRolesIntoSelect(onLoaded) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          rolesCache = response.data;
+          var sel = document.getElementById('userFormVaiTro');
+          sel.innerHTML = '<option value="">--</option>';
+          rolesCache.forEach(function (r) {
+            var opt = document.createElement('option'); opt.value = r.id; opt.textContent = r.ten; sel.appendChild(opt);
+          });
+          if (onLoaded) onLoaded();
+        })
+        .withFailureHandler(function () {})
+        .listRoles(getToken());
+    }
+
+    function resetUserForm() {
+      currentUserEditId = null;
+      ['userFormLogin', 'userFormHoTen', 'userFormNickname', 'userFormChucDanh', 'userFormPassword'].forEach(function (id) { document.getElementById(id).value = ''; });
+      document.getElementById('userFormVaiTro').value = '';
+      document.getElementById('userFormKhoaPhong').value = '';
+      document.getElementById('userFormLogin').disabled = false;
+      document.getElementById('userFormPasswordField').style.display = '';
+      document.getElementById('userCancelEditBtn').style.display = 'none';
+    }
+
+    function loadUserList() {
+      loadRolesIntoSelect(renderUserList);
+      if (formOptions) fillSelect(document.getElementById('userFormKhoaPhong'), formOptions.KHOA_PHONG, 'Toàn viện');
+    }
+
+    function renderUserList() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          setText('userError', '');
+          if (!response || !response.success) { setText('userError', response && response.error ? response.error.message : 'Lỗi tải người dùng.'); return; }
+          var tbody = document.getElementById('userListBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (u) {
+            var tr = document.createElement('tr');
+            var tdLogin = document.createElement('td'); tdLogin.textContent = u.TEN_DANG_NHAP;
+            var tdHoTen = document.createElement('td'); tdHoTen.textContent = u.HO_TEN;
+            var tdVaiTro = document.createElement('td'); tdVaiTro.textContent = roleName(u.VAI_TRO_ID);
+            var tdKhoa = document.createElement('td'); tdKhoa.textContent = u.KHOA_PHONG_PHU_TRACH || 'Toàn viện';
+            var tdStatus = document.createElement('td');
+            var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = u.TRANG_THAI;
+            tdStatus.appendChild(badge);
+            var tdAction = document.createElement('td');
+            var editBtn = document.createElement('button'); editBtn.textContent = 'Sửa'; editBtn.style.width = 'auto'; editBtn.style.marginRight = '6px';
+            editBtn.addEventListener('click', function () { editUserItem(u); });
+            var resetBtn = document.createElement('button'); resetBtn.textContent = 'Đặt lại MK'; resetBtn.style.width = 'auto';
+            resetBtn.addEventListener('click', function () { resetPasswordFlow(u.ID); });
+            tdAction.appendChild(editBtn); tdAction.appendChild(resetBtn);
+            tr.appendChild(tdLogin); tr.appendChild(tdHoTen); tr.appendChild(tdVaiTro); tr.appendChild(tdKhoa); tr.appendChild(tdStatus); tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('userError', err && err.message ? err.message : String(err)); })
+        .listUsers(getToken());
+    }
+
+    function editUserItem(u) {
+      currentUserEditId = u.ID;
+      document.getElementById('userFormLogin').value = u.TEN_DANG_NHAP;
+      document.getElementById('userFormLogin').disabled = true;
+      document.getElementById('userFormHoTen').value = u.HO_TEN || '';
+      document.getElementById('userFormNickname').value = u.NICKNAME || '';
+      document.getElementById('userFormChucDanh').value = u.CHUC_DANH || '';
+      document.getElementById('userFormVaiTro').value = u.VAI_TRO_ID || '';
+      document.getElementById('userFormKhoaPhong').value = u.KHOA_PHONG_PHU_TRACH || '';
+      document.getElementById('userFormPasswordField').style.display = 'none';
+      document.getElementById('userCancelEditBtn').style.display = '';
+    }
+    document.getElementById('userCancelEditBtn').addEventListener('click', resetUserForm);
+
+    function resetPasswordFlow(userId) {
+      var newPassword = window.prompt('Nhập mật khẩu mới cho người dùng này (tối thiểu 8 ký tự):');
+      if (!newPassword) return;
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('userError', response && response.error ? response.error.message : 'Đặt lại mật khẩu thất bại.'); return; }
+          setText('userError', '');
+        })
+        .withFailureHandler(function (err) { setText('userError', err && err.message ? err.message : String(err)); })
+        .resetUserPassword(getToken(), userId, newPassword);
+    }
+
+    document.getElementById('userSaveBtn').addEventListener('click', function () {
+      var data = {
+        HO_TEN: document.getElementById('userFormHoTen').value.trim(),
+        NICKNAME: document.getElementById('userFormNickname').value.trim(),
+        CHUC_DANH: document.getElementById('userFormChucDanh').value.trim(),
+        VAI_TRO_ID: document.getElementById('userFormVaiTro').value,
+        KHOA_PHONG_PHU_TRACH: document.getElementById('userFormKhoaPhong').value
+      };
+      var onDone = function (response) {
+        if (!response || !response.success) { setText('userError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+        resetUserForm();
+        loadUserList();
+      };
+      var onFail = function (err) { setText('userError', err && err.message ? err.message : String(err)); };
+      if (currentUserEditId) {
+        google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).updateUser(getToken(), currentUserEditId, data);
+      } else {
+        var loginId = document.getElementById('userFormLogin').value.trim();
+        var password = document.getElementById('userFormPassword').value;
+        data.TEN_DANG_NHAP = loginId;
+        google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).createUser(getToken(), data, password);
+      }
+    });
+
+    // ---- Audit log ----
+    function loadAuditLog() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          setText('auditError', '');
+          if (!response || !response.success) { setText('auditError', response && response.error ? response.error.message : 'Lỗi tải audit log.'); return; }
+          auditTotal = response.data.total;
+          var tbody = document.getElementById('auditListBody');
+          tbody.innerHTML = '';
+          response.data.items.forEach(function (log) {
+            var tr = document.createElement('tr');
+            ['THOI_GIAN', 'NGUOI_THUC_HIEN', 'HANH_DONG', 'DOI_TUONG_LOAI', 'DOI_TUONG_ID'].forEach(function (f) {
+              var td = document.createElement('td'); td.textContent = log[f]; tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          var totalPages = Math.max(1, Math.ceil(auditTotal / 30));
+          setText('auditPageInfo', 'Trang ' + auditPage + '/' + totalPages);
+        })
+        .withFailureHandler(function (err) { setText('auditError', err && err.message ? err.message : String(err)); })
+        .getAuditLog(getToken(), auditPage);
+    }
+    document.getElementById('auditPrevBtn').addEventListener('click', function () { if (auditPage > 1) { auditPage--; loadAuditLog(); } });
+    document.getElementById('auditNextBtn').addEventListener('click', function () { if (auditPage * 30 < auditTotal) { auditPage++; loadAuditLog(); } });
 
     callServer('ping', function () {}, function () {});
     tryResumeSession();

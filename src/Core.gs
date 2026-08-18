@@ -10,7 +10,8 @@
  *
  * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping,
  * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice,
- * getDashboardSummary.
+ * getDashboardSummary, listCategoryItems, createCategoryItem, updateCategoryItem, listUsers,
+ * listRoles, createUser, updateUser, resetUserPassword, getAuditLog.
  */
 
 function doGet(e) {
@@ -109,4 +110,40 @@ function getDashboardSummary(token) {
   return _invokeController_(function () {
     return Utils.success(Device.getDashboardSummary(token));
   });
+}
+
+function listCategoryItems(token, tabName) {
+  return _invokeController_(function () { return Utils.success(Admin.listCategoryItems(token, tabName)); });
+}
+
+function createCategoryItem(token, tabName, data) {
+  return _invokeController_(function () { return Utils.success(Admin.createCategoryItem(token, tabName, data)); });
+}
+
+function updateCategoryItem(token, tabName, id, data) {
+  return _invokeController_(function () { return Utils.success(Admin.updateCategoryItem(token, tabName, id, data)); });
+}
+
+function listUsers(token) {
+  return _invokeController_(function () { return Utils.success(Admin.listUsers(token)); });
+}
+
+function listRoles(token) {
+  return _invokeController_(function () { return Utils.success(Admin.listRoles(token)); });
+}
+
+function createUser(token, data, initialPassword) {
+  return _invokeController_(function () { return Utils.success(Admin.createUser(token, data, initialPassword)); });
+}
+
+function updateUser(token, id, data) {
+  return _invokeController_(function () { return Utils.success(Admin.updateUser(token, id, data)); });
+}
+
+function resetUserPassword(token, id, newPassword) {
+  return _invokeController_(function () { return Utils.success(Admin.resetUserPassword(token, id, newPassword)); });
+}
+
+function getAuditLog(token, page) {
+  return _invokeController_(function () { return Utils.success(Admin.getAuditLog(token, page)); });
 }

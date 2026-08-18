@@ -1,0 +1,77 @@
+<div class="panel">
+  <h1>Quản trị hệ thống</h1>
+  <div class="tabs">
+    <button type="button" class="admin-tab-btn active" data-admintab="category">Danh mục</button>
+    <button type="button" class="admin-tab-btn" data-admintab="users">Người dùng</button>
+    <button type="button" class="admin-tab-btn" data-admintab="audit">Audit log</button>
+  </div>
+
+  <!-- Danh mục -->
+  <div class="tab-panel active" data-admin-panel="category">
+    <div class="toolbar">
+      <select id="catSelect">
+        <option value="02_LOAI_THIET_BI">Loại thiết bị</option>
+        <option value="03_NHOM_THIET_BI">Nhóm thiết bị</option>
+        <option value="04_KHOA_PHONG">Khoa/phòng</option>
+        <option value="05_VI_TRI">Vị trí</option>
+        <option value="06_HANG_SAN_XUAT">Hãng sản xuất</option>
+        <option value="07_NUOC_SAN_XUAT">Nước sản xuất</option>
+        <option value="08_NHA_CUNG_CAP">Nhà cung cấp</option>
+        <option value="09_NGUOI_PHU_TRACH">Người phụ trách (danh mục tham chiếu)</option>
+      </select>
+    </div>
+    <div id="catError" class="error-text"></div>
+
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="field"><label>Mã</label><input type="text" id="catFormMa"></div>
+      <div class="field"><label>Tên *</label><input type="text" id="catFormTen"></div>
+      <div class="field full"><label>Mô tả</label><input type="text" id="catFormMoTa"></div>
+    </div>
+    <div class="form-actions" style="margin-top:0;margin-bottom:20px;">
+      <button id="catSaveBtn" style="width:auto;">Lưu danh mục</button>
+      <button id="catCancelEditBtn" class="secondary" style="width:auto;display:none;">Huỷ sửa</button>
+    </div>
+
+    <table class="data">
+      <thead><tr><th>Mã</th><th>Tên</th><th>Mô tả</th><th>Trạng thái</th><th></th></tr></thead>
+      <tbody id="catListBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Người dùng -->
+  <div class="tab-panel" data-admin-panel="users">
+    <div id="userError" class="error-text"></div>
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="field"><label>Tên đăng nhập *</label><input type="text" id="userFormLogin"></div>
+      <div class="field"><label>Họ tên *</label><input type="text" id="userFormHoTen"></div>
+      <div class="field"><label>Nickname</label><input type="text" id="userFormNickname"></div>
+      <div class="field"><label>Chức danh nghề nghiệp</label><input type="text" id="userFormChucDanh"></div>
+      <div class="field"><label>Vai trò</label><select id="userFormVaiTro"><option value="">--</option></select></div>
+      <div class="field"><label>Khoa/phòng (rỗng = toàn viện)</label><select id="userFormKhoaPhong"><option value="">Toàn viện</option></select></div>
+      <div class="field" id="userFormPasswordField"><label>Mật khẩu ban đầu *</label><input type="text" id="userFormPassword"></div>
+    </div>
+    <div class="form-actions" style="margin-top:0;margin-bottom:20px;">
+      <button id="userSaveBtn" style="width:auto;">Lưu người dùng</button>
+      <button id="userCancelEditBtn" class="secondary" style="width:auto;display:none;">Huỷ sửa</button>
+    </div>
+
+    <table class="data">
+      <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Vai trò</th><th>Khoa/phòng</th><th>Trạng thái</th><th></th></tr></thead>
+      <tbody id="userListBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Audit log -->
+  <div class="tab-panel" data-admin-panel="audit">
+    <div id="auditError" class="error-text"></div>
+    <table class="data">
+      <thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th><th>ID</th></tr></thead>
+      <tbody id="auditListBody"></tbody>
+    </table>
+    <div class="pagination">
+      <span id="auditPageInfo"></span>
+      <button id="auditPrevBtn">&laquo; Trước</button>
+      <button id="auditNextBtn">Sau &raquo;</button>
+    </div>
+  </div>
+</div>
