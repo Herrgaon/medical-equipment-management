@@ -24,7 +24,9 @@
  * listPendingTransfers, startInventorySession, scanInventoryDevice, getInventorySessionResults,
  * listActiveDevicesForRadiation, listRadiationSafetyByDevice, submitRadiationSafety,
  * listXrayRoomByDevice, submitXrayRoom, listActiveDevicesForDocument, listDocumentsByDevice,
- * uploadDocument, deleteDocument.
+ * uploadDocument, deleteDocument, listActiveDevicesForAlert, listAssignableUsers, listAlerts,
+ * createAlert, closeAlert, listTasks, createTask, startTask, submitTaskForConfirmation,
+ * confirmTaskDone.
  */
 
 function doGet(e) {
@@ -281,6 +283,46 @@ function uploadDocument(token, deviceId, nhomTaiLieu, fileName, base64Data) {
 
 function deleteDocument(token, docId) {
   return _invokeController_(function () { return Utils.success(Document.deleteDocument(token, docId)); });
+}
+
+function listActiveDevicesForAlert(token) {
+  return _invokeController_(function () { return Utils.success(Alert.listActiveDevices(token)); });
+}
+
+function listAssignableUsers(token) {
+  return _invokeController_(function () { return Utils.success(Alert.listAssignableUsers(token)); });
+}
+
+function listAlerts(token, trangThai) {
+  return _invokeController_(function () { return Utils.success(Alert.listAlerts(token, trangThai)); });
+}
+
+function createAlert(token, data) {
+  return _invokeController_(function () { return Utils.success(Alert.createAlert(token, data)); });
+}
+
+function closeAlert(token, alertId) {
+  return _invokeController_(function () { return Utils.success(Alert.closeAlert(token, alertId)); });
+}
+
+function listTasks(token, filter) {
+  return _invokeController_(function () { return Utils.success(Alert.listTasks(token, filter)); });
+}
+
+function createTask(token, data) {
+  return _invokeController_(function () { return Utils.success(Alert.createTask(token, data)); });
+}
+
+function startTask(token, taskId) {
+  return _invokeController_(function () { return Utils.success(Alert.startTask(token, taskId)); });
+}
+
+function submitTaskForConfirmation(token, taskId, note) {
+  return _invokeController_(function () { return Utils.success(Alert.submitTaskForConfirmation(token, taskId, note)); });
+}
+
+function confirmTaskDone(token, taskId) {
+  return _invokeController_(function () { return Utils.success(Alert.confirmTaskDone(token, taskId)); });
 }
 
 function listWarrantyByDevice(token, deviceId) {

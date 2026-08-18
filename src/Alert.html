@@ -1,0 +1,83 @@
+<div class="panel">
+  <h1>Cảnh báo &amp; Công việc</h1>
+  <div class="tabs">
+    <button type="button" class="al-tab-btn active" data-altab="canhbao">Cảnh báo</button>
+    <button type="button" class="al-tab-btn" data-altab="congviec">Công việc</button>
+  </div>
+
+  <!-- Cảnh báo -->
+  <div class="tab-panel active" data-al-panel="canhbao">
+    <div id="alError" class="error-text"></div>
+
+    <div class="form-grid">
+      <div class="field"><label>Loại cảnh báo *</label>
+        <select id="alLoai">
+          <option value="Bảo hành">Bảo hành</option><option value="Bảo trì">Bảo trì</option>
+          <option value="Kiểm định">Kiểm định</option><option value="Hiệu chuẩn">Hiệu chuẩn</option>
+          <option value="Hồ sơ thiếu">Hồ sơ thiếu</option><option value="Sự cố">Sự cố</option>
+          <option value="Bức xạ">Bức xạ</option><option value="Khác">Khác</option>
+        </select>
+      </div>
+      <div class="field"><label>Mức độ *</label>
+        <select id="alMucDo">
+          <option value="Thấp">Thấp</option><option value="TB">Trung bình</option>
+          <option value="Cao">Cao</option><option value="Khẩn cấp">Khẩn cấp</option>
+        </select>
+      </div>
+      <div class="field"><label>Thiết bị liên quan</label><select id="alDeviceSelect"><option value="">-- Không gắn thiết bị --</option></select></div>
+      <div class="field full"><label>Ghi chú / mô tả</label><input type="text" id="alGhiChu"></div>
+    </div>
+    <button id="alCreateBtn" style="width:auto;">Tạo cảnh báo</button>
+
+    <div class="field" style="max-width:260px; margin-top:20px;">
+      <label>Lọc theo trạng thái</label>
+      <select id="alFilterStatus">
+        <option value="">Tất cả</option>
+        <option value="Mới">Mới</option>
+        <option value="Đã giao việc">Đã giao việc</option>
+        <option value="Đã đóng">Đã đóng</option>
+      </select>
+    </div>
+    <table class="data">
+      <thead><tr><th>Loại</th><th>Mức độ</th><th>Thiết bị</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày phát sinh</th><th></th></tr></thead>
+      <tbody id="alListBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Công việc -->
+  <div class="tab-panel" data-al-panel="congviec">
+    <div id="tkError" class="error-text"></div>
+    <div id="tkLinkedBadge" class="hint-text" style="display:none;"></div>
+
+    <div class="form-grid">
+      <div class="field"><label>Loại công việc *</label><input type="text" id="tkLoai" placeholder="VD: Kiểm định lại, Sửa chữa..."></div>
+      <div class="field"><label>Người phụ trách *</label><select id="tkNguoiPhuTrach"><option value="">-- Chọn --</option></select></div>
+      <div class="field"><label>Hạn xử lý</label><input type="date" id="tkHanXuLy"></div>
+      <div class="field"><label>Thiết bị liên quan</label><select id="tkDeviceSelect"><option value="">-- Không gắn thiết bị --</option></select></div>
+      <div class="field full"><label>Ghi chú</label><input type="text" id="tkGhiChu"></div>
+    </div>
+    <button id="tkCreateBtn" style="width:auto;">Tạo công việc</button>
+    <button id="tkCancelLinkBtn" class="secondary" style="width:auto; display:none;">Huỷ liên kết cảnh báo</button>
+
+    <div class="form-grid" style="margin-top:20px;">
+      <div class="field"><label>Chỉ hiển thị</label>
+        <select id="tkFilterMine">
+          <option value="0">Tất cả công việc</option>
+          <option value="1">Được giao cho tôi</option>
+        </select>
+      </div>
+      <div class="field"><label>Lọc theo trạng thái</label>
+        <select id="tkFilterStatus">
+          <option value="">Tất cả</option>
+          <option value="Mới">Mới</option><option value="Đang xử lý">Đang xử lý</option>
+          <option value="Chờ xác nhận">Chờ xác nhận</option><option value="Hoàn thành">Hoàn thành</option>
+          <option value="Quá hạn">Quá hạn</option>
+        </select>
+      </div>
+    </div>
+    <table class="data">
+      <thead><tr><th>Thiết bị</th><th>Loại công việc</th><th>Người phụ trách</th><th>Hạn xử lý</th><th>Trạng thái</th><th></th></tr></thead>
+      <tbody id="tkListBody"></tbody>
+    </table>
+  </div>
+</div>
