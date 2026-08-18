@@ -92,7 +92,10 @@
   <?!= include('Shared_Scripts'); ?>
   <script>
     // initialDeviceId đến từ query string URL (người dùng/QR có thể chứa giá trị bất kỳ) -> PHẢI
-    // qua <?= ?> tự động escape, không được dùng <?!= ?> raw output ở 2 dòng dưới đây.
+    // dùng scriptlet dạng escape (dấu bằng, không có chấm than) cho 2 dòng dưới đây, không phải
+    // dạng raw output. LƯU Ý: không viết ví dụ thẻ scriptlet thật dưới dạng text trong comment ở
+    // đây — HtmlService quét toàn file tìm cặp dấu mở/đóng thẻ kiểu văn bản thuần, không hiểu ngữ
+    // cảnh comment, nên ví dụ viết thẳng ra sẽ bị hiểu nhầm thành scriptlet rỗng thật và vỡ template.
     var INITIAL_DEVICE_ID = "<?= initialDeviceId ?>";
     var APP_URL = "<?= appUrl ?>";
 

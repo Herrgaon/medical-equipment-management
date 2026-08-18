@@ -24,13 +24,9 @@
 
 function doGet(e) {
   var template = HtmlService.createTemplateFromFile('Index');
-  // e.parameter.device (từ link QR quét vào) chỉ dùng làm gợi ý MỞ SẴN TAB nào phía client —
-  // KHÔNG dùng để quyết định trả dữ liệu gì hay bỏ qua kiểm tra quyền; dữ liệu thật vẫn luôn
-  // phải qua getDeviceDetail(token, id) xác thực đầy đủ. Đây là giá trị từ URL (người dùng có
-  // thể tự sửa) nên template phải dùng <?= ?> tự động escape, KHÔNG được dùng <?!= ?>.
+  // initialDeviceId: tu URL, chi dung de client tu mo tab, luon dung <?= ?> escape.
   template.initialDeviceId = (e && e.parameter && e.parameter.device) ? String(e.parameter.device) : '';
-  // Web App chạy trong iframe sandbox — client KHÔNG lấy được URL thật qua window.location, phải
-  // truyền từ server. Dùng để nhúng vào QR (deep link), không phải giá trị người dùng nên an toàn.
+  // appUrl: iframe sandbox nen client khong tu lay duoc qua window.location.
   template.appUrl = ScriptApp.getService().getUrl();
   return template.evaluate()
     .setTitle('Quản lý Trang thiết bị Y tế')
