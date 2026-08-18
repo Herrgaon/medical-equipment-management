@@ -1,0 +1,56 @@
+<div class="panel">
+  <h1 id="lcTitle">Vòng đời hình thành thiết bị</h1>
+  <p class="hint-text">Mỗi bước chỉ áp dụng cho thiết bị đang đúng trạng thái tương ứng (Tiếp nhận → Nghiệm thu → Bàn giao → Khoa/phòng xác nhận).</p>
+  <div id="lcError" class="error-text"></div>
+
+  <div class="field">
+    <label>Chọn thiết bị đang chờ ở bước này</label>
+    <select id="lcDeviceSelect"><option value="">-- Chọn thiết bị --</option></select>
+  </div>
+
+  <!-- Tiếp nhận -->
+  <div id="lcFormReceipt" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>Ngày tiếp nhận *</label><input type="date" id="lcNgayTiepNhan"></div>
+      <div class="field"><label>Nguồn hình thành</label><input type="text" id="lcNguonHinhThanh"></div>
+      <div class="field"><label>Đơn vị bàn giao</label><input type="text" id="lcDonViBanGiao"></div>
+      <div class="field"><label>Tình trạng khi nhận</label><input type="text" id="lcTinhTrangKhiNhan"></div>
+      <div class="field full"><label>Ghi chú</label><input type="text" id="lcGhiChuReceipt"></div>
+    </div>
+    <button id="lcSubmitReceiptBtn" style="width:auto;">Hoàn tất tiếp nhận</button>
+  </div>
+
+  <!-- Nghiệm thu -->
+  <div id="lcFormAcceptance" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>Ngày nghiệm thu *</label><input type="date" id="lcNgayNghiemThu"></div>
+      <div class="field"><label>Hội đồng nghiệm thu</label><input type="text" id="lcHoiDong"></div>
+      <div class="field"><label>Kết quả *</label>
+        <select id="lcKetQua"><option value="Đạt">Đạt</option><option value="Đạt có điều kiện">Đạt có điều kiện</option><option value="Không đạt">Không đạt</option></select>
+      </div>
+      <div class="field full"><label>Tồn tại ghi nhận</label><input type="text" id="lcTonTai"></div>
+    </div>
+    <button id="lcSubmitAcceptanceBtn" style="width:auto;">Ghi nhận nghiệm thu</button>
+  </div>
+
+  <!-- Bàn giao -->
+  <div id="lcFormHandover" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>Ngày bàn giao *</label><input type="date" id="lcNgayBanGiao"></div>
+      <div class="field"><label>Đơn vị nhận</label><input type="text" id="lcDonViNhan"></div>
+      <div class="field"><label>Khoa/phòng nhận *</label><select id="lcKhoaPhongNhan"><option value="">--</option></select></div>
+      <div class="field"><label>Vị trí nhận</label><select id="lcViTriNhan"><option value="">--</option></select></div>
+      <div class="field"><label>Người nhận</label><select id="lcNguoiNhan"><option value="">--</option></select></div>
+    </div>
+    <button id="lcSubmitHandoverBtn" style="width:auto;">Tạo phiếu bàn giao</button>
+  </div>
+
+  <!-- Xác nhận bàn giao (danh sách riêng, không theo device picker ở trên) -->
+  <div id="lcConfirmSection" style="display:none; margin-top:24px;">
+    <h2>Phiếu bàn giao chờ khoa/phòng xác nhận</h2>
+    <table class="data">
+      <thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th>Ngày bàn giao</th><th></th></tr></thead>
+      <tbody id="lcConfirmBody"></tbody>
+    </table>
+  </div>
+</div>

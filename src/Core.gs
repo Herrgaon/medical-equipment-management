@@ -12,7 +12,8 @@
  * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice,
  * getDashboardSummary, listCategoryItems, createCategoryItem, updateCategoryItem, listUsers,
  * listRoles, createUser, updateUser, resetUserPassword, getAuditLog, listAllForQr,
- * previewExcel, confirmImport.
+ * previewExcel, confirmImport, listDevicesAwaiting, submitReceipt, submitAcceptance,
+ * submitHandover, confirmHandover, listPendingHandoverConfirm.
  */
 
 function doGet(e) {
@@ -113,6 +114,30 @@ function updateDevice(token, id, data) {
   return _invokeController_(function () {
     return Utils.success(Device.updateDevice(token, id, data));
   });
+}
+
+function listDevicesAwaiting(token, stage) {
+  return _invokeController_(function () { return Utils.success(Lifecycle.listDevicesAwaiting(token, stage)); });
+}
+
+function submitReceipt(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(Lifecycle.submitReceipt(token, deviceId, data)); });
+}
+
+function submitAcceptance(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(Lifecycle.submitAcceptance(token, deviceId, data)); });
+}
+
+function submitHandover(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(Lifecycle.submitHandover(token, deviceId, data)); });
+}
+
+function confirmHandover(token, handoverId) {
+  return _invokeController_(function () { return Utils.success(Lifecycle.confirmHandover(token, handoverId)); });
+}
+
+function listPendingHandoverConfirm(token) {
+  return _invokeController_(function () { return Utils.success(Lifecycle.listPendingHandoverConfirm(token)); });
 }
 
 function previewExcel(token, base64Data, fileName) {
