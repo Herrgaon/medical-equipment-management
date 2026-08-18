@@ -1,0 +1,34 @@
+<div class="panel">
+  <h1 id="taTitle">Kiểm định / Hiệu chuẩn</h1>
+  <div id="taError" class="error-text"></div>
+
+  <div class="field">
+    <label>Chọn thiết bị</label>
+    <select id="taDeviceSelect"><option value="">-- Chọn thiết bị --</option></select>
+  </div>
+
+  <div id="taForm" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>Căn cứ áp dụng</label><input type="text" id="taCanCu"></div>
+      <div class="field"><label>Ngày thực hiện</label><input type="date" id="taNgayThucHien"></div>
+      <div class="field"><label>Đơn vị thực hiện</label><input type="text" id="taDonVi"></div>
+      <div class="field"><label>Trạng thái *</label>
+        <select id="taTrangThai">
+          <option value="Không áp dụng">Không áp dụng</option>
+          <option value="Chưa thực hiện">Chưa thực hiện</option>
+          <option value="Đang chờ">Đang chờ</option>
+          <option value="Đạt">Đạt</option>
+          <option value="Không đạt">Không đạt</option>
+        </select>
+      </div>
+      <div class="field"><label>Ngày hết hạn</label><input type="date" id="taNgayHetHan"></div>
+    </div>
+    <button id="taSubmitBtn" style="width:auto;">Ghi nhận kết quả</button>
+
+    <h2 style="margin-top:24px;">Lịch sử</h2>
+    <table class="data">
+      <thead><tr><th>Ngày thực hiện</th><th>Đơn vị</th><th>Trạng thái</th><th>Ngày hết hạn</th></tr></thead>
+      <tbody id="taHistoryBody"></tbody>
+    </table>
+  </div>
+</div>

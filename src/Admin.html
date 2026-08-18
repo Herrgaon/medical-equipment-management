@@ -2,6 +2,7 @@
   <h1>Quản trị hệ thống</h1>
   <div class="tabs">
     <button type="button" class="admin-tab-btn active" data-admintab="category">Danh mục</button>
+    <button type="button" class="admin-tab-btn" data-admintab="config">Cấu hình quy tắc</button>
     <button type="button" class="admin-tab-btn" data-admintab="users">Người dùng</button>
     <button type="button" class="admin-tab-btn" data-admintab="audit">Audit log</button>
   </div>
@@ -35,6 +36,35 @@
     <table class="data">
       <thead><tr><th>Mã</th><th>Tên</th><th>Mô tả</th><th>Trạng thái</th><th></th></tr></thead>
       <tbody id="catListBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Cấu hình quy tắc -->
+  <div class="tab-panel" data-admin-panel="config">
+    <p class="hint-text">Chu kỳ, ngưỡng cảnh báo theo loại thiết bị (mục 27_CAU_HINH) — các giá trị này cần Khoa Dược - VTTBYT xác nhận thực tế (mục 14 tài liệu thiết kế), hệ thống không tự đặt giá trị mặc định. Để trống "Loại thiết bị" = áp dụng chung mọi loại.</p>
+    <div id="cfgError" class="error-text"></div>
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="field"><label>Loại thiết bị (để trống = mặc định chung)</label><select id="cfgLoaiThietBi"><option value="">-- Mặc định chung --</option></select></div>
+      <div class="field"><label>Loại quy tắc *</label>
+        <select id="cfgLoaiQuyTac">
+          <option value="Bảo trì">Bảo trì</option><option value="Kiểm định">Kiểm định</option>
+          <option value="Hiệu chuẩn">Hiệu chuẩn</option><option value="Cảnh báo">Cảnh báo</option><option value="Bảo hành">Bảo hành</option>
+        </select>
+      </div>
+      <div class="field"><label>Chu kỳ (tháng)</label><input type="number" id="cfgChuKyThang"></div>
+      <div class="field"><label>Số ngày cảnh báo trước</label><input type="number" id="cfgSoNgayCanhBao"></div>
+      <div class="field"><label>Bắt buộc</label>
+        <select id="cfgBatBuoc"><option value="Chưa xác định">Chưa xác định</option><option value="Có">Có</option><option value="Không">Không</option></select>
+      </div>
+      <div class="field full"><label>Căn cứ áp dụng</label><input type="text" id="cfgCanCu"></div>
+    </div>
+    <div class="form-actions" style="margin-top:0;margin-bottom:20px;">
+      <button id="cfgSaveBtn" style="width:auto;">Lưu cấu hình</button>
+      <button id="cfgCancelEditBtn" class="secondary" style="width:auto;display:none;">Huỷ sửa</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>Loại thiết bị</th><th>Loại quy tắc</th><th>Chu kỳ (tháng)</th><th>Báo trước (ngày)</th><th>Bắt buộc</th><th></th></tr></thead>
+      <tbody id="cfgListBody"></tbody>
     </table>
   </div>
 

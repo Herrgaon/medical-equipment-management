@@ -51,6 +51,55 @@ var Admin = {
     return result.data;
   },
 
+  // ---- Cấu hình quy tắc (27_CAU_HINH) — chu kỳ/ngưỡng cảnh báo theo loại thiết bị. ----
+  // CHƯA có dữ liệu mặc định: các giá trị này thuộc mục 14 tài liệu thiết kế (cần Khoa Dược -
+  // VTTBYT xác nhận), Admin tự nhập khi có thông tin thật, hệ thống không tự bịa số liệu.
+
+  listConfig: function (token) {
+    Auth.assertPermission(token, CATEGORY_MODULE, 'VIEW');
+    return Database.list('27_CAU_HINH', {}).items;
+  },
+
+  createConfig: function (token, data) {
+    var auth = Auth.assertPermission(token, CATEGORY_MODULE, 'CREATE');
+    Utils.assert(!Utils.isBlank(data.LOAI_QUY_TAC), ERROR_CODES.VALIDATION_ERROR, 'Thiếu loại quy tắc.');
+    var result = Database.insertRow('27_CAU_HINH', {
+      TEN: (data.LOAI_QUY_TAC || '') + (data.LOAI_THIET_BI_ID ? ' — ' + data.LOAI_THIET_BI_ID : ' (mặc định mọi loại)'),
+      LOAI_THIET_BI_ID: data.LOAI_THIET_BI_ID || '',
+      LOAI_QUY_TAC: data.LOAI_QUY_TAC,
+      CHU_KY_THANG: data.CHU_KY_THANG || '',
+      SO_NGAY_CANH_BAO_TRUOC: data.SO_NGAY_CANH_BAO_TRUOC || '',
+      CAN_CU_AP_DUNG: data.CAN_CU_AP_DUNG || '',
+      BAT_BUOC: data.BAT_BUOC || 'Chưa xác định',
+      TRANG_THAI: 'Hoạt động'
+    }, auth.user.tenDangNhap);
+    Database.appendAuditLog(auth.user.tenDangNhap, 'CREATE_CONFIG', '27_CAU_HINH', result.data.ID, null, result.data);
+    return result.data;
+  },
+
+  updateConfig: function (token, id, data) {
+    var auth = Auth.assertPermission(token, CATEGORY_MODULE, 'EDIT');
+    var patch = {};
+    ['LOAI_THIET_BI_ID', 'LOAI_QUY_TAC', 'CHU_KY_THANG', 'SO_NGAY_CANH_BAO_TRUOC', 'CAN_CU_AP_DUNG', 'BAT_BUOC', 'TRANG_THAI'].forEach(function (f) {
+      if (data.hasOwnProperty(f)) patch[f] = data[f];
+    });
+    var result = Database.updateRowById('27_CAU_HINH', id, patch, auth.user.tenDangNhap);
+    Database.appendAuditLog(auth.user.tenDangNhap, 'UPDATE_CONFIG', '27_CAU_HINH', id, null, patch);
+    return result.data;
+  },
+
+  /**
+   * Tra cứu quy tắc áp dụng cho 1 loại thiết bị + loại nghiệp vụ (Kiểm định/Hiệu chuẩn/Bảo trì...).
+   * Ưu tiên quy tắc khớp đúng LOAI_THIET_BI_ID; nếu không có, dùng quy tắc để trống (mặc định chung).
+   * Dùng nội bộ (Inspection/Calibration/Maintenance service), không phải endpoint Core.gs.
+   */
+  findConfigRule_: function (loaiThietBiId, loaiQuyTac) {
+    var rows = Database.list('27_CAU_HINH', { filters: { LOAI_QUY_TAC: loaiQuyTac } }).items;
+    var specific = rows.filter(function (r) { return r.LOAI_THIET_BI_ID === loaiThietBiId; })[0];
+    if (specific) return specific;
+    return rows.filter(function (r) { return Utils.isBlank(r.LOAI_THIET_BI_ID); })[0] || null;
+  },
+
   // ---- Người dùng ----
 
   listUsers: function (token) {

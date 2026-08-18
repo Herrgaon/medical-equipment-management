@@ -14,7 +14,9 @@
  * listRoles, createUser, updateUser, resetUserPassword, getAuditLog, listAllForQr,
  * previewExcel, confirmImport, listDevicesAwaiting, submitReceipt, submitAcceptance,
  * submitHandover, confirmHandover, listPendingHandoverConfirm, listWarrantyByDevice,
- * createWarrantyClaim, updateWarrantyClaim, listActiveDevicesForWarranty.
+ * createWarrantyClaim, updateWarrantyClaim, listActiveDevicesForWarranty, listConfig,
+ * createConfig, updateConfig, listActiveDevicesForTech, listTechAssuranceByDevice,
+ * submitTechAssuranceResult.
  */
 
 function doGet(e) {
@@ -141,6 +143,18 @@ function listPendingHandoverConfirm(token) {
   return _invokeController_(function () { return Utils.success(Lifecycle.listPendingHandoverConfirm(token)); });
 }
 
+function listActiveDevicesForTech(token) {
+  return _invokeController_(function () { return Utils.success(InspectionCalibration.listActiveDevices(token)); });
+}
+
+function listTechAssuranceByDevice(token, typeKey, deviceId) {
+  return _invokeController_(function () { return Utils.success(InspectionCalibration.listByDevice(token, typeKey, deviceId)); });
+}
+
+function submitTechAssuranceResult(token, typeKey, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(InspectionCalibration.submitResult(token, typeKey, deviceId, data)); });
+}
+
 function listWarrantyByDevice(token, deviceId) {
   return _invokeController_(function () { return Utils.success(Warranty.listByDevice(token, deviceId)); });
 }
@@ -185,6 +199,18 @@ function createCategoryItem(token, tabName, data) {
 
 function updateCategoryItem(token, tabName, id, data) {
   return _invokeController_(function () { return Utils.success(Admin.updateCategoryItem(token, tabName, id, data)); });
+}
+
+function listConfig(token) {
+  return _invokeController_(function () { return Utils.success(Admin.listConfig(token)); });
+}
+
+function createConfig(token, data) {
+  return _invokeController_(function () { return Utils.success(Admin.createConfig(token, data)); });
+}
+
+function updateConfig(token, id, data) {
+  return _invokeController_(function () { return Utils.success(Admin.updateConfig(token, id, data)); });
 }
 
 function listUsers(token) {
