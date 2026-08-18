@@ -68,7 +68,12 @@ var Device = {
       NGAY_BAT_DAU_BAO_HANH: data.NGAY_BAT_DAU_BAO_HANH || '',
       NGAY_HET_BAO_HANH: data.NGAY_HET_BAO_HANH || '',
       QR_URL: '',
-      FOLDER_ID: '' // Document.gs (Sprint 1.3) sẽ tạo thư mục Drive riêng và cập nhật lại field này
+      FOLDER_ID: '', // DocumentService.gs tạo thư mục Drive riêng khi upload tài liệu đầu tiên
+      MA_KHAI_BH: data.MA_KHAI_BH || '',
+      SO_GIAY_PHEP_NK_LH: data.SO_GIAY_PHEP_NK_LH || '',
+      NGUON_KINH_PHI: data.NGUON_KINH_PHI || '',
+      NGUYEN_GIA: data.NGUYEN_GIA || '',
+      DON_VI_TINH: data.DON_VI_TINH || ''
     };
 
     var result = Database.insertRow('01_THIET_BI', payload, auth.user.tenDangNhap);

@@ -17,7 +17,8 @@ var IMPORT_MAX_ROWS = 2000;
 var IMPORT_COLUMNS = [
   'Tên thiết bị', 'Nhóm thiết bị', 'Loại thiết bị', 'Khoa/phòng', 'Vị trí', 'Người phụ trách',
   'Hãng sản xuất', 'Nước sản xuất', 'Model', 'Serial', 'Năm sản xuất', 'Phân loại', 'Nhà cung cấp',
-  'Tình trạng kỹ thuật', 'Ngày đưa vào sử dụng', 'Hình thức mua sắm', 'Ngày bắt đầu bảo hành', 'Ngày hết bảo hành'
+  'Tình trạng kỹ thuật', 'Ngày đưa vào sử dụng', 'Hình thức mua sắm', 'Ngày bắt đầu bảo hành', 'Ngày hết bảo hành',
+  'Đơn vị tính', 'Mã khai bảo hiểm', 'Số giấy phép NK/lưu hành', 'Nguồn kinh phí', 'Nguyên giá'
 ];
 var IMPORT_REQUIRED_COLUMNS = ['Tên thiết bị', 'Nhóm thiết bị', 'Khoa/phòng', 'Vị trí', 'Người phụ trách', 'Ngày đưa vào sử dụng'];
 
@@ -168,7 +169,12 @@ var Import = {
         NGAY_DUA_VAO_SU_DUNG: ngayDuaVao ? ngayDuaVao.toISOString() : '',
         HINH_THUC_MUA_SAM: get('Hình thức mua sắm') || '',
         NGAY_BAT_DAU_BAO_HANH: ngayBaoHanhBD ? ngayBaoHanhBD.toISOString() : '',
-        NGAY_HET_BAO_HANH: ngayBaoHanhKT ? ngayBaoHanhKT.toISOString() : ''
+        NGAY_HET_BAO_HANH: ngayBaoHanhKT ? ngayBaoHanhKT.toISOString() : '',
+        DON_VI_TINH: get('Đơn vị tính') || '',
+        MA_KHAI_BH: get('Mã khai bảo hiểm') || '',
+        SO_GIAY_PHEP_NK_LH: get('Số giấy phép NK/lưu hành') || '',
+        NGUON_KINH_PHI: get('Nguồn kinh phí') || '',
+        NGUYEN_GIA: get('Nguyên giá') || ''
       });
     });
 

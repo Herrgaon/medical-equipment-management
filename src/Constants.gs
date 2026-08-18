@@ -93,12 +93,16 @@ var SCHEMA_REGISTRY = [
     // Transcribe nguyên văn mục 4.1. Ghi chú: NUOC_SAN_XUAT giữ là Text tự do đúng như đặc tả gốc
     // (dù mục 4.2 có dành tiền tố NSX- cho 07_NUOC_SAN_XUAT — tài liệu không nói rõ đây có phải FK
     // hay không, nên KHÔNG tự ý nối FK khi đặc tả không xác nhận rõ).
+    // 5 cột cuối (MA_KHAI_BH..DON_VI_TINH) thêm sau, sau khi đối chiếu docs/Danh mục TBYT.xlsx
+    // (danh mục thiết bị thật của bệnh viện) — xem CLAUDE.md mục "Dữ liệu tồn kho thật". Text tự
+    // do, không tạo sheet danh mục riêng (không đủ căn cứ cho danh sách cố định, giống NUOC_SAN_XUAT).
     columns: [
       'MA_THIET_BI', 'TEN_THIET_BI', 'LOAI_THIET_BI_ID', 'NHA_CUNG_CAP_ID', 'PHAN_LOAI',
       'NHOM_THIET_BI_ID', 'HANG_SAN_XUAT_ID', 'NUOC_SAN_XUAT', 'NAM_SAN_XUAT', 'MODEL', 'SERIAL',
       'KHOA_PHONG_ID', 'VI_TRI_ID', 'NGUOI_PHU_TRACH_ID', 'TINH_TRANG_KY_THUAT', 'TRANG_THAI_QUAN_LY',
       'NGAY_DUA_VAO_SU_DUNG', 'HINH_THUC_MUA_SAM', 'NGAY_BAT_DAU_BAO_HANH', 'NGAY_HET_BAO_HANH',
-      'QR_URL', 'FOLDER_ID'
+      'QR_URL', 'FOLDER_ID',
+      'MA_KHAI_BH', 'SO_GIAY_PHEP_NK_LH', 'NGUON_KINH_PHI', 'NGUYEN_GIA', 'DON_VI_TINH'
     ].concat(AUDIT_TRAIL_COLUMNS)
   },
   { index: 2, tabName: '02_LOAI_THIET_BI', idPrefix: 'LOAI-', template: 'CATEGORY', columns: [] },

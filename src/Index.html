@@ -330,7 +330,8 @@
     });
 
     function clearDeviceForm() {
-      ['ddTenThietBi', 'ddNuoc', 'ddModel', 'ddSerial', 'ddNamSX', 'ddHinhThuc', 'ddNgayDua', 'ddBaoHanhBD', 'ddBaoHanhKT']
+      ['ddTenThietBi', 'ddNuoc', 'ddModel', 'ddSerial', 'ddNamSX', 'ddHinhThuc', 'ddNgayDua', 'ddBaoHanhBD', 'ddBaoHanhKT',
+        'ddDonViTinh', 'ddMaKhaiBH', 'ddSoGiayPhepNkLh', 'ddNguonKinhPhi', 'ddNguyenGia']
         .forEach(function (id) { document.getElementById(id).value = ''; });
       ['ddLoai', 'ddNhom', 'ddHang', 'ddNCC', 'ddKhoaPhong', 'ddViTri', 'ddNguoiPhuTrach', 'ddPhanLoai'].forEach(function (id) { document.getElementById(id).value = ''; });
       document.getElementById('ddTinhTrang').value = 'Chưa xác định';
@@ -355,6 +356,11 @@
       document.getElementById('ddNgayDua').value = (device.NGAY_DUA_VAO_SU_DUNG || '').toString().slice(0, 10);
       document.getElementById('ddBaoHanhBD').value = (device.NGAY_BAT_DAU_BAO_HANH || '').toString().slice(0, 10);
       document.getElementById('ddBaoHanhKT').value = (device.NGAY_HET_BAO_HANH || '').toString().slice(0, 10);
+      document.getElementById('ddDonViTinh').value = device.DON_VI_TINH || '';
+      document.getElementById('ddMaKhaiBH').value = device.MA_KHAI_BH || '';
+      document.getElementById('ddSoGiayPhepNkLh').value = device.SO_GIAY_PHEP_NK_LH || '';
+      document.getElementById('ddNguonKinhPhi').value = device.NGUON_KINH_PHI || '';
+      document.getElementById('ddNguyenGia').value = device.NGUYEN_GIA || '';
     }
 
     function deviceDeepLink(deviceId) {
@@ -458,7 +464,12 @@
         HINH_THUC_MUA_SAM: document.getElementById('ddHinhThuc').value.trim(),
         NGAY_DUA_VAO_SU_DUNG: document.getElementById('ddNgayDua').value,
         NGAY_BAT_DAU_BAO_HANH: document.getElementById('ddBaoHanhBD').value,
-        NGAY_HET_BAO_HANH: document.getElementById('ddBaoHanhKT').value
+        NGAY_HET_BAO_HANH: document.getElementById('ddBaoHanhKT').value,
+        DON_VI_TINH: document.getElementById('ddDonViTinh').value.trim(),
+        MA_KHAI_BH: document.getElementById('ddMaKhaiBH').value.trim(),
+        SO_GIAY_PHEP_NK_LH: document.getElementById('ddSoGiayPhepNkLh').value.trim(),
+        NGUON_KINH_PHI: document.getElementById('ddNguonKinhPhi').value.trim(),
+        NGUYEN_GIA: document.getElementById('ddNguyenGia').value
       };
     }
 

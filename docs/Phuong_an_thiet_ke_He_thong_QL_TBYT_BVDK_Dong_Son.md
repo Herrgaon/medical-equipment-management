@@ -195,7 +195,7 @@ Danh muc 02-09 (LOAI, NHOM, HANG, NCC, KHOA_PHONG, VI_TRI...)
 
 Mọi bảng nghiệp vụ (10–24, 29–36) đều có 6 cột hệ thống chung, không lặp lại trong bảng bên dưới: THIET_BI_ID (FK, trừ 25-28), NGAY_TAO, NGUOI_TAO, NGAY_CAP_NHAT, NGUOI_CAP_NHAT, GHI_CHU. Bảng dưới đây liệt kê các cột NGHIỆP VỤ RIÊNG của từng Sheet.
 
-### 4.1. Sheet lõi – 01_THIET_BI (27 cột theo Đặc tả mục 17)
+### 4.1. Sheet lõi – 01_THIET_BI (32 cột — 27 cột gốc theo Đặc tả mục 17 + 5 cột bổ sung, xem ghi chú cuối bảng)
 
 | # | Cột | Kiểu dữ liệu | Ghi chú |
 |---|---|---|---|
@@ -222,7 +222,14 @@ Mọi bảng nghiệp vụ (10–24, 29–36) đều có 6 cột hệ thống ch
 | 21 | NGAY_HET_BAO_HANH | Date | Nullable, dùng cho Alert.gs |
 | 22 | QR_URL | Text | Sinh khi tạo thiết bị |
 | 23 | FOLDER_ID | Text | ID thư mục Drive riêng |
-| 24-27 | CREATED_AT/BY, UPDATED_AT/BY | Datetime/Text | Audit cơ bản |
+| 24 | MA_KHAI_BH | Text | Mã khai bảo hiểm y tế của thiết bị (đối chiếu hồ sơ khai BH) |
+| 25 | SO_GIAY_PHEP_NK_LH | Text | Số giấy phép nhập khẩu / số giấy phép lưu hành TBYT — dữ liệu pháp lý |
+| 26 | NGUON_KINH_PHI | Text | Nguồn tài sản/kinh phí mua sắm (VD: TPCP, TTĐ, Đơn vị, Dự án...). Text tự do, không FK — danh sách nguồn kinh phí thực tế của bệnh viện có thể thay đổi, chưa đủ căn cứ cố định thành 1 sheet danh mục |
+| 27 | NGUYEN_GIA | Number | Nguyên giá tài sản (đồng) |
+| 28 | DON_VI_TINH | Text | Cái/Bộ/HT... |
+| 29-32 | CREATED_AT/BY, UPDATED_AT/BY | Datetime/Text | Audit cơ bản |
+
+*Cột 24-28 (MA_KHAI_BH, SO_GIAY_PHEP_NK_LH, NGUON_KINH_PHI, NGUYEN_GIA, DON_VI_TINH) không có trong Đặc tả mục 17 gốc — bổ sung sau khi đối chiếu `docs/Danh mục TBYT.xlsx` (danh mục ~217 thiết bị thật đang có tại BVDK Đông Sơn) cho thấy đây là dữ liệu bệnh viện đang lưu thủ công mà hệ thống chưa có chỗ chứa. Không thêm cột "Số lượng" tương ứng cột SO_LUONG trong file gốc vì xung đột với bất biến "1 thiết bị = 1 MA_THIET_BI = 1 mã QR" của thiết kế — mỗi đơn vị vật lý phải là 1 dòng riêng. Không thêm cột giá trị viết bằng chữ (DOC_BANG_CHU trong file gốc) vì suy ra được từ NGUYEN_GIA, không cần lưu.*
 
 ### 4.2. Nhóm danh mục (02–09, 25–27) – cấu trúc dùng chung
 
