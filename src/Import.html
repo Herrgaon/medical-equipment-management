@@ -4,9 +4,10 @@
 
   <div id="importStep1">
     <p class="hint-text">
-      File .xlsx, dòng đầu tiên là tiêu đề đúng tên cột (không phân biệt hoa/thường): <br>
-      <em>Tên thiết bị*, Nhóm thiết bị*, Loại thiết bị, Khoa/phòng*, Vị trí*, Người phụ trách*, Hãng sản xuất, Nước sản xuất, Model, Serial, Năm sản xuất, Phân loại, Nhà cung cấp, Tình trạng kỹ thuật, Ngày đưa vào sử dụng*, Hình thức mua sắm, Ngày bắt đầu bảo hành, Ngày hết bảo hành, Đơn vị tính, Mã khai bảo hiểm, Số giấy phép NK/lưu hành, Nguồn kinh phí, Nguyên giá</em>
-      <br>(* bắt buộc). Các cột danh mục (Nhóm/Loại/Khoa-phòng/Vị trí/Hãng SX/Nhà cung cấp/Người phụ trách) phải khớp đúng tên đã có trong Quản trị &gt; Danh mục.
+      File .xlsx, dòng đầu tiên là tiêu đề đúng tên cột (không phân biệt hoa/thường, không phân biệt có dấu/không dấu): <br>
+      <em>Tên thiết bị*, Nhóm thiết bị, Loại thiết bị, Khoa/phòng*, Vị trí, Người phụ trách, Hãng sản xuất, Nước sản xuất, Model, Serial, Năm sản xuất, Phân loại, Nhà cung cấp, Tình trạng kỹ thuật, Ngày đưa vào sử dụng*, Hình thức mua sắm, Ngày bắt đầu bảo hành, Ngày hết bảo hành, Đơn vị tính, Mã khai bảo hiểm, Số giấy phép NK/lưu hành, Nguồn kinh phí, Nguyên giá, Ghi chú</em>
+      <br>(* bắt buộc). Cột danh mục (Nhóm/Loại/Khoa-phòng/Vị trí/Hãng SX/Nhà cung cấp/Người phụ trách): nếu tên chưa có trong Quản trị &gt; Danh mục, hệ thống <strong>tự tạo danh mục mới</strong> khi xác nhận nhập — không chặn. Để trống Nhóm thiết bị/Vị trí/Người phụ trách sẽ tự điền nhãn tạm ("Chưa phân nhóm"/"Chưa xác định vị trí"/"Chưa phân công"), bổ sung lại sau qua Quản trị &gt; Danh mục.
+      <br>Hệ thống cũng tự nhận diện tên cột từ file danh mục thiết bị cũ của bệnh viện (vd MÃ THIẾT BỊ, TEN_TAI_SAN, KHOA_PHONG, NGUON_TS...) — không cần đổi tên cột thủ công.
     </p>
     <input type="file" id="importFileInput" accept=".xlsx">
     <div id="importError" class="error-text"></div>
@@ -30,7 +31,7 @@
 
     <h2>Dòng hợp lệ — sẽ được nhập</h2>
     <table class="data">
-      <thead><tr><th>Dòng</th><th>Tên thiết bị</th><th>Serial</th></tr></thead>
+      <thead><tr><th>Dòng</th><th>Tên thiết bị</th><th>Serial</th><th>Ghi chú</th></tr></thead>
       <tbody id="importValidBody"></tbody>
     </table>
 

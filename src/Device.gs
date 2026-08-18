@@ -73,7 +73,8 @@ var Device = {
       SO_GIAY_PHEP_NK_LH: data.SO_GIAY_PHEP_NK_LH || '',
       NGUON_KINH_PHI: data.NGUON_KINH_PHI || '',
       NGUYEN_GIA: data.NGUYEN_GIA || '',
-      DON_VI_TINH: data.DON_VI_TINH || ''
+      DON_VI_TINH: data.DON_VI_TINH || '',
+      GHI_CHU: data.GHI_CHU || ''
     };
 
     var result = Database.insertRow('01_THIET_BI', payload, auth.user.tenDangNhap);

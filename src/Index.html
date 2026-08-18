@@ -341,7 +341,7 @@
 
     function clearDeviceForm() {
       ['ddTenThietBi', 'ddNuoc', 'ddModel', 'ddSerial', 'ddNamSX', 'ddHinhThuc', 'ddNgayDua', 'ddBaoHanhBD', 'ddBaoHanhKT',
-        'ddDonViTinh', 'ddMaKhaiBH', 'ddSoGiayPhepNkLh', 'ddNguonKinhPhi', 'ddNguyenGia']
+        'ddDonViTinh', 'ddMaKhaiBH', 'ddSoGiayPhepNkLh', 'ddNguonKinhPhi', 'ddNguyenGia', 'ddGhiChu']
         .forEach(function (id) { document.getElementById(id).value = ''; });
       ['ddLoai', 'ddNhom', 'ddHang', 'ddNCC', 'ddKhoaPhong', 'ddViTri', 'ddNguoiPhuTrach', 'ddPhanLoai'].forEach(function (id) { document.getElementById(id).value = ''; });
       document.getElementById('ddTinhTrang').value = 'Chưa xác định';
@@ -371,6 +371,7 @@
       document.getElementById('ddSoGiayPhepNkLh').value = device.SO_GIAY_PHEP_NK_LH || '';
       document.getElementById('ddNguonKinhPhi').value = device.NGUON_KINH_PHI || '';
       document.getElementById('ddNguyenGia').value = device.NGUYEN_GIA || '';
+      document.getElementById('ddGhiChu').value = device.GHI_CHU || '';
     }
 
     function deviceDeepLink(deviceId) {
@@ -479,7 +480,8 @@
         MA_KHAI_BH: document.getElementById('ddMaKhaiBH').value.trim(),
         SO_GIAY_PHEP_NK_LH: document.getElementById('ddSoGiayPhepNkLh').value.trim(),
         NGUON_KINH_PHI: document.getElementById('ddNguonKinhPhi').value.trim(),
-        NGUYEN_GIA: document.getElementById('ddNguyenGia').value
+        NGUYEN_GIA: document.getElementById('ddNguyenGia').value,
+        GHI_CHU: document.getElementById('ddGhiChu').value.trim()
       };
     }
 
@@ -2065,7 +2067,8 @@
         var tdRow = document.createElement('td'); tdRow.textContent = r.rowNumber;
         var tdTen = document.createElement('td'); tdTen.textContent = r.TEN_THIET_BI;
         var tdSerial = document.createElement('td'); tdSerial.textContent = r.SERIAL;
-        tr.appendChild(tdRow); tr.appendChild(tdTen); tr.appendChild(tdSerial);
+        var tdNotes = document.createElement('td'); tdNotes.textContent = (r.notes || []).join('; ');
+        tr.appendChild(tdRow); tr.appendChild(tdTen); tr.appendChild(tdSerial); tr.appendChild(tdNotes);
         validBody.appendChild(tr);
       });
 

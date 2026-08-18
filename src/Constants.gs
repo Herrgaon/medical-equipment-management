@@ -102,7 +102,11 @@ var SCHEMA_REGISTRY = [
       'KHOA_PHONG_ID', 'VI_TRI_ID', 'NGUOI_PHU_TRACH_ID', 'TINH_TRANG_KY_THUAT', 'TRANG_THAI_QUAN_LY',
       'NGAY_DUA_VAO_SU_DUNG', 'HINH_THUC_MUA_SAM', 'NGAY_BAT_DAU_BAO_HANH', 'NGAY_HET_BAO_HANH',
       'QR_URL', 'FOLDER_ID',
-      'MA_KHAI_BH', 'SO_GIAY_PHEP_NK_LH', 'NGUON_KINH_PHI', 'NGUYEN_GIA', 'DON_VI_TINH'
+      'MA_KHAI_BH', 'SO_GIAY_PHEP_NK_LH', 'NGUON_KINH_PHI', 'NGUYEN_GIA', 'DON_VI_TINH',
+      // GHI_CHU thêm khi làm Import Excel cho dữ liệu tồn kho thật — 01_THIET_BI dùng template CORE
+      // (không tự có GHI_CHU như BUSINESS) nên phải khai tường minh; dùng để giữ mã thiết bị cũ của
+      // bệnh viện (không khớp định dạng MA_THIET_BI hệ thống tự sinh) + ghi chú tự do từ Excel gốc.
+      'GHI_CHU'
     ].concat(AUDIT_TRAIL_COLUMNS)
   },
   { index: 2, tabName: '02_LOAI_THIET_BI', idPrefix: 'LOAI-', template: 'CATEGORY', columns: [] },
