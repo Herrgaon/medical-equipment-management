@@ -1,0 +1,27 @@
+<div class="panel">
+  <h1>Bảo hành</h1>
+  <div id="warError" class="error-text"></div>
+
+  <div class="field">
+    <label>Chọn thiết bị</label>
+    <select id="warDeviceSelect"><option value="">-- Chọn thiết bị --</option></select>
+  </div>
+
+  <div id="warForm" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>Ngày bắt đầu *</label><input type="date" id="warNgayBatDau"></div>
+      <div class="field"><label>Ngày kết thúc</label><input type="date" id="warNgayKetThuc"></div>
+      <div class="field"><label>Đơn vị bảo hành</label><input type="text" id="warDonVi"></div>
+      <div class="field"><label>Điều kiện/phạm vi</label><input type="text" id="warDieuKien"></div>
+      <div class="field"><label>Số lần yêu cầu thu máy</label><input type="number" id="warLanYeuCau" value="0"></div>
+      <div class="field full"><label>Kết quả xử lý</label><input type="text" id="warKetQua"></div>
+    </div>
+    <button id="warSubmitBtn" style="width:auto;">Ghi nhận yêu cầu bảo hành</button>
+
+    <h2 style="margin-top:24px;">Lịch sử bảo hành thiết bị này</h2>
+    <table class="data">
+      <thead><tr><th>Ngày bắt đầu</th><th>Ngày kết thúc</th><th>Đơn vị</th><th>Kết quả xử lý</th></tr></thead>
+      <tbody id="warHistoryBody"></tbody>
+    </table>
+  </div>
+</div>

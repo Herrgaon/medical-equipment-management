@@ -13,7 +13,8 @@
  * getDashboardSummary, listCategoryItems, createCategoryItem, updateCategoryItem, listUsers,
  * listRoles, createUser, updateUser, resetUserPassword, getAuditLog, listAllForQr,
  * previewExcel, confirmImport, listDevicesAwaiting, submitReceipt, submitAcceptance,
- * submitHandover, confirmHandover, listPendingHandoverConfirm.
+ * submitHandover, confirmHandover, listPendingHandoverConfirm, listWarrantyByDevice,
+ * createWarrantyClaim, updateWarrantyClaim, listActiveDevicesForWarranty.
  */
 
 function doGet(e) {
@@ -138,6 +139,22 @@ function confirmHandover(token, handoverId) {
 
 function listPendingHandoverConfirm(token) {
   return _invokeController_(function () { return Utils.success(Lifecycle.listPendingHandoverConfirm(token)); });
+}
+
+function listWarrantyByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(Warranty.listByDevice(token, deviceId)); });
+}
+
+function createWarrantyClaim(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(Warranty.createClaim(token, deviceId, data)); });
+}
+
+function updateWarrantyClaim(token, id, data) {
+  return _invokeController_(function () { return Utils.success(Warranty.updateClaim(token, id, data)); });
+}
+
+function listActiveDevicesForWarranty(token) {
+  return _invokeController_(function () { return Utils.success(Warranty.listActiveDevices(token)); });
 }
 
 function previewExcel(token, base64Data, fileName) {
