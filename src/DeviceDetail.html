@@ -1,6 +1,12 @@
 <div class="panel">
   <span class="link-back" id="devBackBtn">&laquo; Quay lại danh sách</span>
-  <h1 id="ddTitle">Thiết bị mới</h1>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <h1 id="ddTitle">Thiết bị mới</h1>
+    <div id="ddQrBox" style="display:none; text-align:center;">
+      <div id="ddQrContainer"></div>
+      <button id="ddQrPrintBtn" style="width:auto; margin-top:6px; padding:5px 10px; font-size:12px;">In tem</button>
+    </div>
+  </div>
   <div id="devDetailError" class="error-text"></div>
 
   <div class="tabs">

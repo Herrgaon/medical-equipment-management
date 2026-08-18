@@ -5,6 +5,8 @@
   <meta charset="utf-8">
   <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
   <?!= include('Shared_Styles'); ?>
+  <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+  <?!= include('QRCodeLib'); ?>
 </head>
 <body>
   <div class="card" id="loginCard">
@@ -51,6 +53,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('Admin'); ?>
       </div>
+      <div id="view-qr" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('QR'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -65,6 +71,11 @@
   <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
   <?!= include('Shared_Scripts'); ?>
   <script>
+    // initialDeviceId đến từ query string URL (người dùng/QR có thể chứa giá trị bất kỳ) -> PHẢI
+    // qua <?= ?> tự động escape, không được dùng <?!= ?> raw output ở 2 dòng dưới đây.
+    var INITIAL_DEVICE_ID = "<?= initialDeviceId ?>";
+    var APP_URL = "<?= appUrl ?>";
+
     var SESSION_STORAGE_KEY = 'qltbyt_session_token';
     var formOptions = null;
     var currentDeviceId = null; // null = đang tạo mới
@@ -88,6 +99,7 @@
         if (view === 'devices') { showView('devices'); loadDevices(); }
         else if (view === 'dashboard') { showView('dashboard'); loadDashboard(); }
         else if (view === 'admin') { showView('admin'); loadCategoryList(); }
+        else if (view === 'qr') { showView('qr'); loadQrList(); }
         else if (view === 'stub') { setText('stubTitle', btn.getAttribute('data-label')); showView('stub'); }
       });
     });
@@ -113,8 +125,13 @@
       setText('whoRole', user.vaiTro || '');
       setText('whoScope', user.khoaPhongPhuTrach ? user.khoaPhongPhuTrach : 'Toàn viện');
       loadFormOptions();
-      showView('dashboard');
-      loadDashboard();
+      if (INITIAL_DEVICE_ID) {
+        // Mở từ link QR quét vào — mở thẳng chi tiết thiết bị đó thay vì Trang chủ.
+        openDeviceDetail(INITIAL_DEVICE_ID);
+      } else {
+        showView('dashboard');
+        loadDashboard();
+      }
     }
 
     function showLogin(errorMessage) {
@@ -296,10 +313,63 @@
       document.getElementById('ddBaoHanhKT').value = (device.NGAY_HET_BAO_HANH || '').toString().slice(0, 10);
     }
 
+    function deviceDeepLink(deviceId) {
+      return APP_URL + (APP_URL.indexOf('?') === -1 ? '?' : '&') + 'device=' + encodeURIComponent(deviceId);
+    }
+
+    /**
+     * In tem QR hàng loạt: vẽ QR vào các div ẩn tạm, đọc trực tiếp <canvas> (đồng bộ — chỉ phần
+     * ảnh <img> hiển thị của thư viện là bất đồng bộ, không cần dùng ở đây), rồi ghép thành 1 cửa
+     * sổ in riêng — tránh phải nhúng lại toàn bộ thư viện QR vào cửa sổ mới.
+     */
+    function openPrintWindow(items) {
+      var tempHolder = document.createElement('div');
+      tempHolder.style.position = 'absolute';
+      tempHolder.style.left = '-9999px';
+      document.body.appendChild(tempHolder);
+
+      var labelsHtml = items.map(function (item) {
+        var tempDiv = document.createElement('div');
+        tempHolder.appendChild(tempDiv);
+        new QRCode(tempDiv, { text: deviceDeepLink(item.id), width: 150, height: 150 });
+        var dataUrl = tempDiv.querySelector('canvas').toDataURL('image/png');
+        return '<div class="qr-label"><img src="' + dataUrl + '"><div>' + escapeHtml(item.ma) + '</div><div>' + escapeHtml(item.ten) + '</div></div>';
+      }).join('');
+
+      document.body.removeChild(tempHolder);
+
+      var printWin = window.open('', '_blank');
+      printWin.document.write(
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>In tem QR</title><style>' +
+        'body{font-family:sans-serif;} .qr-label{display:inline-block;width:170px;text-align:center;margin:8px;padding:8px;border:1px solid #ccc;font-size:12px;} .qr-label img{width:130px;height:130px;}' +
+        '</style></head><body>' + labelsHtml + '<script>window.onload=function(){window.print();};<\/script></body></html>'
+      );
+      printWin.document.close();
+    }
+
+    function escapeHtml(s) {
+      var div = document.createElement('div');
+      div.textContent = s || '';
+      return div.innerHTML;
+    }
+
+    function renderDeviceQr(deviceId) {
+      var box = document.getElementById('ddQrBox');
+      var container = document.getElementById('ddQrContainer');
+      container.innerHTML = '';
+      if (!deviceId || !APP_URL) { box.style.display = 'none'; return; }
+      box.style.display = '';
+      new QRCode(container, { text: deviceDeepLink(deviceId), width: 110, height: 110 });
+    }
+
+    var currentDeviceData = null;
+
     function openDeviceDetail(deviceId) {
       currentDeviceId = deviceId;
+      currentDeviceData = null;
       setText('devDetailError', '');
       showView('device-detail');
+      renderDeviceQr(deviceId);
       if (!deviceId) {
         setText('ddTitle', 'Thiết bị mới');
         clearDeviceForm();
@@ -312,12 +382,18 @@
             setText('devDetailError', response && response.error ? response.error.message : 'Không tải được thiết bị.');
             return;
           }
+          currentDeviceData = response.data;
           setText('ddTitle', response.data.TEN_THIET_BI + ' (' + response.data.MA_THIET_BI + ')');
           fillDeviceForm(response.data);
         })
         .withFailureHandler(function (err) { setText('devDetailError', err && err.message ? err.message : String(err)); })
         .getDeviceDetail(getToken(), deviceId);
     }
+
+    document.getElementById('ddQrPrintBtn').addEventListener('click', function () {
+      if (!currentDeviceId || !currentDeviceData) return;
+      openPrintWindow([{ id: currentDeviceId, ma: currentDeviceData.MA_THIET_BI, ten: currentDeviceData.TEN_THIET_BI }]);
+    });
 
     function readDeviceForm() {
       return {
@@ -573,6 +649,48 @@
         data.TEN_DANG_NHAP = loginId;
         google.script.run.withSuccessHandler(onDone).withFailureHandler(onFail).createUser(getToken(), data, password);
       }
+    });
+
+    // ---- QR hàng loạt ----
+    var qrDeviceList = [];
+    function loadQrList() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          setText('qrError', '');
+          if (!response || !response.success) { setText('qrError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          qrDeviceList = response.data;
+          var tbody = document.getElementById('qrListBody');
+          tbody.innerHTML = '';
+          qrDeviceList.forEach(function (d) {
+            var tr = document.createElement('tr');
+            var tdChk = document.createElement('td');
+            var chk = document.createElement('input'); chk.type = 'checkbox'; chk.setAttribute('data-id', d.ID);
+            tdChk.appendChild(chk);
+            var tdMa = document.createElement('td'); tdMa.textContent = d.MA_THIET_BI;
+            var tdTen = document.createElement('td'); tdTen.textContent = d.TEN_THIET_BI;
+            tr.appendChild(tdChk); tr.appendChild(tdMa); tr.appendChild(tdTen);
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('qrError', err && err.message ? err.message : String(err)); })
+        .listAllForQr(getToken());
+    }
+
+    document.getElementById('qrSelectAllBtn').addEventListener('click', function () {
+      var boxes = document.querySelectorAll('#qrListBody input[type=checkbox]');
+      var allChecked = Array.prototype.every.call(boxes, function (b) { return b.checked; });
+      boxes.forEach(function (b) { b.checked = !allChecked; });
+    });
+
+    document.getElementById('qrPrintBtn').addEventListener('click', function () {
+      var selectedIds = Array.prototype.map.call(
+        document.querySelectorAll('#qrListBody input[type=checkbox]:checked'),
+        function (b) { return b.getAttribute('data-id'); }
+      );
+      if (!selectedIds.length) { setText('qrError', 'Chưa chọn thiết bị nào.'); return; }
+      var items = qrDeviceList.filter(function (d) { return selectedIds.indexOf(d.ID) !== -1; })
+        .map(function (d) { return { id: d.ID, ma: d.MA_THIET_BI, ten: d.TEN_THIET_BI }; });
+      openPrintWindow(items);
     });
 
     // ---- Audit log ----

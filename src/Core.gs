@@ -11,11 +11,19 @@
  * Danh sách hàm public: doGet, include, login, logout, changePassword, getCurrentUserInfo, ping,
  * getDeviceFormOptions, listDevices, getDeviceDetail, createDevice, updateDevice,
  * getDashboardSummary, listCategoryItems, createCategoryItem, updateCategoryItem, listUsers,
- * listRoles, createUser, updateUser, resetUserPassword, getAuditLog.
+ * listRoles, createUser, updateUser, resetUserPassword, getAuditLog, listAllForQr.
  */
 
 function doGet(e) {
   var template = HtmlService.createTemplateFromFile('Index');
+  // e.parameter.device (từ link QR quét vào) chỉ dùng làm gợi ý MỞ SẴN TAB nào phía client —
+  // KHÔNG dùng để quyết định trả dữ liệu gì hay bỏ qua kiểm tra quyền; dữ liệu thật vẫn luôn
+  // phải qua getDeviceDetail(token, id) xác thực đầy đủ. Đây là giá trị từ URL (người dùng có
+  // thể tự sửa) nên template phải dùng <?= ?> tự động escape, KHÔNG được dùng <?!= ?>.
+  template.initialDeviceId = (e && e.parameter && e.parameter.device) ? String(e.parameter.device) : '';
+  // Web App chạy trong iframe sandbox — client KHÔNG lấy được URL thật qua window.location, phải
+  // truyền từ server. Dùng để nhúng vào QR (deep link), không phải giá trị người dùng nên an toàn.
+  template.appUrl = ScriptApp.getService().getUrl();
   return template.evaluate()
     .setTitle('Quản lý Trang thiết bị Y tế')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
@@ -104,6 +112,10 @@ function updateDevice(token, id, data) {
   return _invokeController_(function () {
     return Utils.success(Device.updateDevice(token, id, data));
   });
+}
+
+function listAllForQr(token) {
+  return _invokeController_(function () { return Utils.success(Device.listAllForQr(token)); });
 }
 
 function getDashboardSummary(token) {

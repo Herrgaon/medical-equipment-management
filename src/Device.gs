@@ -133,6 +133,13 @@ var Device = {
     return { items: all.slice(start, start + pageSize), total: total, page: currentPage, pageSize: pageSize };
   },
 
+  /** Danh sách rút gọn toàn bộ thiết bị (trong phạm vi) cho trang in mã QR hàng loạt — không phân trang. */
+  listAllForQr: function (token) {
+    var auth = Auth.assertPermission(token, DEVICE_MODULE, 'VIEW');
+    var all = this._applyScopeFilter_(Database.list('01_THIET_BI', {}).items, auth.scope);
+    return all.map(function (d) { return { ID: d.ID, MA_THIET_BI: d.MA_THIET_BI, TEN_THIET_BI: d.TEN_THIET_BI }; });
+  },
+
   /** Số liệu tối thiểu cho Trang chủ Sprint 1.2 — Dashboard đầy đủ (cảnh báo, biểu đồ...) thuộc giai đoạn sau. */
   getDashboardSummary: function (token) {
     var auth = Auth.assertPermission(token, DEVICE_MODULE, 'VIEW');
