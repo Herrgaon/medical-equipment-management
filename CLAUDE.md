@@ -37,7 +37,9 @@ Kế hoạch 4 giai đoạn ở mục 13 tài liệu thiết kế — về nguy�
 
 **Module đã chạy thật** (không còn stub): Trang chủ, Thiết bị (CRUD đầy đủ), Quản trị hệ thống (danh mục 02-09, cấu hình 27_CAU_HINH, người dùng, audit log), Mã QR (sinh client-side + in tem), Import Excel, Tiếp nhận/Nghiệm thu/Bàn giao, Bảo hành, Kiểm định, Hiệu chuẩn, Sự cố/Sửa chữa/Bảo trì (dùng chung 1 bước xác nhận an toàn), Điều chuyển (Tạo yêu cầu → Duyệt → Khoa/phòng mới xác nhận đã nhận), Kiểm kê (theo phiên, tự phát hiện lệch vị trí), Bức xạ (An toàn bức xạ, Hồ sơ phòng XQ/CT), Tài liệu (upload file lên Drive, 1 thư mục riêng/thiết bị), Cảnh báo & Công việc (tạo/đóng cảnh báo thủ công, giao việc, Bắt đầu→Nộp xác nhận→Xác nhận hoàn thành, quét tự động hằng ngày theo hạn).
 
-**Còn là stub**: Báo cáo.
+**Còn là stub**: không còn — đủ 100% module theo khung điều hướng gốc đã có bản chạy thật (chi tiết nghiệp vụ có thể còn mở rộng thêm, xem ghi chú từng module).
+
+**Báo cáo & Xuất hồ sơ (ReportService.gs)**: 3 tab — Danh sách thiết bị (lọc + xuất CSV, FK đã đổi sang tên hiển thị), Cảnh báo & Công việc (xem nhanh + xuất CSV, gọi thẳng lại `Alert.listAlerts`/`listTasks` có sẵn, không tạo endpoint trùng lặp), Hồ sơ 1 thiết bị (gộp toàn bộ bản ghi nghiệp vụ liên quan mọi sheet, mở cửa sổ in — dùng Ctrl+P lưu PDF, theo đúng mẫu cửa sổ in tem QR đã có ở QR.gs, không xây cơ chế xuất file mới). CSV dựng ở client (Blob + `<a download>`), có BOM UTF-8 để Excel đọc đúng tiếng Việt.
 
 **Cảnh báo & Công việc (AlertService.gs)** — phạm vi MVP, còn thiếu so với mục 7 tài liệu thiết kế:
 - Đã làm: CRUD cảnh báo (23_CANH_BAO) thủ công, giao việc từ cảnh báo hoặc tạo việc độc lập (36_CONG_VIEC), luồng trạng thái Mới→Đang xử lý→Chờ xác nhận→Hoàn thành (người được giao tự cập nhật, Super Admin/Quản lý thiết bị xác nhận đóng — module này không có quyền "Duyệt" riêng trong ma trận đã seed nên dùng quyền Sửa + chặn Kỹ thuật viên tự xác nhận việc của mình). `runDailyScan()` quét hạn Bảo hành/Kiểm định/Hiệu chuẩn/Bảo trì theo ngưỡng `27_CAU_HINH.SO_NGAY_CANH_BAO_TRUOC`, tự sinh cảnh báo (không có cấu hình khớp = bỏ qua, không tự bịa ngưỡng), đồng thời đánh dấu công việc quá hạn.

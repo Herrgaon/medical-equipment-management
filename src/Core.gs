@@ -26,7 +26,8 @@
  * listXrayRoomByDevice, submitXrayRoom, listActiveDevicesForDocument, listDocumentsByDevice,
  * uploadDocument, deleteDocument, listActiveDevicesForAlert, listAssignableUsers, listAlerts,
  * createAlert, closeAlert, listTasks, createTask, startTask, submitTaskForConfirmation,
- * confirmTaskDone.
+ * confirmTaskDone, getReportFilterOptions, exportDeviceListReport, listActiveDevicesForReport,
+ * buildDeviceProfile.
  */
 
 function doGet(e) {
@@ -323,6 +324,22 @@ function submitTaskForConfirmation(token, taskId, note) {
 
 function confirmTaskDone(token, taskId) {
   return _invokeController_(function () { return Utils.success(Alert.confirmTaskDone(token, taskId)); });
+}
+
+function getReportFilterOptions(token) {
+  return _invokeController_(function () { return Utils.success(Report.getFilterOptions(token)); });
+}
+
+function exportDeviceListReport(token, filter) {
+  return _invokeController_(function () { return Utils.success(Report.exportDeviceList(token, filter)); });
+}
+
+function listActiveDevicesForReport(token) {
+  return _invokeController_(function () { return Utils.success(Report.listActiveDevices(token)); });
+}
+
+function buildDeviceProfile(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(Report.buildDeviceProfile(token, deviceId)); });
 }
 
 function listWarrantyByDevice(token, deviceId) {

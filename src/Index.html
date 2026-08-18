@@ -93,6 +93,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('Alert'); ?>
       </div>
+      <div id="view-report" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('Report'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -147,6 +151,7 @@
         else if (view === 'radiation') { showView('radiation'); openRadiationTab(btn.getAttribute('data-label')); }
         else if (view === 'document') { showView('document'); loadDocumentDeviceOptions(); }
         else if (view === 'alert') { showView('alert'); openAlertTab(); }
+        else if (view === 'report') { showView('report'); openReportTab(); }
         else if (view === 'stub') { setText('stubTitle', btn.getAttribute('data-label')); showView('stub'); }
       });
     });
@@ -1773,6 +1778,212 @@
         })
         .withFailureHandler(function (err) { setText('tkError', err && err.message ? err.message : String(err)); })
         .confirmTaskDone(getToken(), taskId);
+    }
+
+    // ================= Báo cáo & Xuất hồ sơ =================
+    document.querySelectorAll('.rp-tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { activateRpTab(btn.getAttribute('data-rptab')); });
+    });
+
+    function activateRpTab(tabKey) {
+      document.querySelectorAll('.rp-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('[data-rp-panel]').forEach(function (p) { p.classList.remove('active'); });
+      document.querySelector('.rp-tab-btn[data-rptab="' + tabKey + '"]').classList.add('active');
+      document.querySelector('[data-rp-panel="' + tabKey + '"]').classList.add('active');
+    }
+
+    var rpDeviceRowsCache = [];
+    var rpAlertRowsCache = [];
+    var rpTaskRowsCache = [];
+
+    function openReportTab() {
+      activateRpTab('devices');
+      loadReportFilterOptions();
+      loadReportDeviceList();
+      loadReportProfileDeviceOptions();
+      loadReportAlerts();
+      loadReportTasks();
+    }
+
+    function loadReportFilterOptions() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('rpDevError', response && response.error ? response.error.message : 'Lỗi tải bộ lọc.'); return; }
+          fillSelect(document.getElementById('rpKhoaPhong'), response.data.KHOA_PHONG, 'Tất cả');
+          fillSelect(document.getElementById('rpNhom'), response.data.NHOM_THIET_BI, 'Tất cả');
+          var trangThaiSel = document.getElementById('rpTrangThai');
+          trangThaiSel.innerHTML = '<option value="">Tất cả</option>';
+          response.data.TRANG_THAI.forEach(function (tt) {
+            var opt = document.createElement('option'); opt.value = tt; opt.textContent = tt;
+            trangThaiSel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function (err) { setText('rpDevError', err && err.message ? err.message : String(err)); })
+        .getReportFilterOptions(getToken());
+    }
+
+    function loadReportDeviceList() {
+      var filter = {
+        khoaPhongId: document.getElementById('rpKhoaPhong').value,
+        nhomThietBiId: document.getElementById('rpNhom').value,
+        trangThai: document.getElementById('rpTrangThai').value,
+        keyword: document.getElementById('rpKeyword').value.trim()
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('rpDevError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          rpDeviceRowsCache = response.data;
+          setText('rpDevCount', response.data.length + ' thiết bị.');
+          var tbody = document.getElementById('rpDevBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (d) {
+            var tr = document.createElement('tr');
+            [d.MA_THIET_BI, d.TEN_THIET_BI, d.KHOA_PHONG, d.NHOM_THIET_BI, d.TRANG_THAI_QUAN_LY, d.SERIAL].forEach(function (val) {
+              var td = document.createElement('td'); td.textContent = val || ''; tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('rpDevError', err && err.message ? err.message : String(err)); })
+        .exportDeviceListReport(getToken(), filter);
+    }
+
+    document.getElementById('rpDevFilterBtn').addEventListener('click', loadReportDeviceList);
+    document.getElementById('rpDevExportBtn').addEventListener('click', function () {
+      exportToCsv('danh-sach-thiet-bi.csv', rpDeviceRowsCache);
+    });
+
+    function loadReportAlerts() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('rpAlError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          rpAlertRowsCache = response.data.filter(function (a) { return a.TRANG_THAI !== 'Đã đóng'; });
+          var tbody = document.getElementById('rpAlBody');
+          tbody.innerHTML = '';
+          rpAlertRowsCache.forEach(function (a) {
+            var tr = document.createElement('tr');
+            [a.LOAI_CANH_BAO, a.MUC_DO, (a.MA_THIET_BI ? (a.MA_THIET_BI + ' — ' + a.TEN_THIET_BI) : ''), a.TRANG_THAI, a.NGAY_PHAT_SINH].forEach(function (val) {
+              var td = document.createElement('td'); td.textContent = val || ''; tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('rpAlError', err && err.message ? err.message : String(err)); })
+        .listAlerts(getToken(), '');
+    }
+
+    document.getElementById('rpAlExportBtn').addEventListener('click', function () {
+      exportToCsv('canh-bao-dang-mo.csv', rpAlertRowsCache);
+    });
+
+    function loadReportTasks() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('rpAlError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          rpTaskRowsCache = response.data.filter(function (t) { return t.TRANG_THAI !== 'Hoàn thành'; });
+          var tbody = document.getElementById('rpTkBody');
+          tbody.innerHTML = '';
+          rpTaskRowsCache.forEach(function (t) {
+            var tr = document.createElement('tr');
+            [(t.MA_THIET_BI ? (t.MA_THIET_BI + ' — ' + t.TEN_THIET_BI) : ''), t.LOAI_CONG_VIEC, t.NGUOI_PHU_TRACH_ID,
+              (t.HAN_XU_LY || '').toString().slice(0, 10), t.TRANG_THAI + (t.isOverdue ? ' (quá hạn)' : '')].forEach(function (val) {
+              var td = document.createElement('td'); td.textContent = val || ''; tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('rpAlError', err && err.message ? err.message : String(err)); })
+        .listTasks(getToken(), {});
+    }
+
+    document.getElementById('rpTkExportBtn').addEventListener('click', function () {
+      exportToCsv('cong-viec-chua-hoan-thanh.csv', rpTaskRowsCache);
+    });
+
+    function loadReportProfileDeviceOptions() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('rpProfError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var sel = document.getElementById('rpProfDeviceSelect');
+          sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+          response.data.forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI;
+            sel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function (err) { setText('rpProfError', err && err.message ? err.message : String(err)); })
+        .listActiveDevicesForReport(getToken());
+    }
+
+    document.getElementById('rpProfViewBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('rpProfDeviceSelect').value;
+      if (!deviceId) { setText('rpProfError', 'Chưa chọn thiết bị.'); return; }
+      setText('rpProfError', '');
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('rpProfError', response && response.error ? response.error.message : 'Lỗi tải hồ sơ.'); return; }
+          openDeviceProfilePrintWindow(response.data);
+        })
+        .withFailureHandler(function (err) { setText('rpProfError', err && err.message ? err.message : String(err)); })
+        .buildDeviceProfile(getToken(), deviceId);
+    });
+
+    function renderKeyValueTable(obj) {
+      var html = '<table class="data">';
+      Object.keys(obj).forEach(function (k) {
+        var val = obj[k];
+        if (val === null || val === undefined || val === '') return;
+        html += '<tr><th style="width:220px;text-align:left;">' + escapeHtml(k) + '</th><td>' + escapeHtml(String(val)) + '</td></tr>';
+      });
+      return html + '</table>';
+    }
+
+    function renderRowsTable(rows) {
+      if (!rows.length) return '<p><em>Không có dữ liệu.</em></p>';
+      var cols = Object.keys(rows[0]).filter(function (c) { return ['ID', 'THIET_BI_ID', 'NGAY_TAO', 'NGUOI_TAO', 'NGAY_CAP_NHAT', 'NGUOI_CAP_NHAT'].indexOf(c) === -1; });
+      var html = '<table class="data"><thead><tr>' + cols.map(function (c) { return '<th>' + escapeHtml(c) + '</th>'; }).join('') + '</tr></thead><tbody>';
+      rows.forEach(function (r) {
+        html += '<tr>' + cols.map(function (c) { return '<td>' + escapeHtml(r[c] == null ? '' : String(r[c])) + '</td>'; }).join('') + '</tr>';
+      });
+      return html + '</tbody></table>';
+    }
+
+    function openDeviceProfilePrintWindow(profile) {
+      var html = '<h1>' + escapeHtml(profile.device.TEN_THIET_BI) + ' (' + escapeHtml(profile.device.MA_THIET_BI) + ')</h1>';
+      html += '<h2>Thông tin chung</h2>' + renderKeyValueTable(profile.device);
+      profile.sections.forEach(function (s) {
+        html += '<h2>' + escapeHtml(s.label) + '</h2>' + renderRowsTable(s.rows);
+      });
+
+      var printWin = window.open('', '_blank');
+      printWin.document.write(
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hồ sơ thiết bị</title><style>' +
+        'body{font-family:sans-serif;padding:20px;} h1{margin-bottom:4px;} h2{margin-top:24px;border-bottom:1px solid #ccc;padding-bottom:4px;}' +
+        'table.data{border-collapse:collapse;width:100%;font-size:13px;} table.data th,table.data td{border:1px solid #ddd;padding:4px 8px;text-align:left;}' +
+        '</style></head><body>' + html + '</body></html>'
+      );
+      printWin.document.close();
+    }
+
+    function exportToCsv(filename, rows) {
+      if (!rows || !rows.length) { window.alert('Không có dữ liệu để xuất.'); return; }
+      var headers = Object.keys(rows[0]);
+      var csvLines = [headers.join(',')];
+      rows.forEach(function (row) {
+        csvLines.push(headers.map(function (h) {
+          var val = row[h] === null || row[h] === undefined ? '' : String(row[h]);
+          val = val.replace(/"/g, '""');
+          if (val.indexOf(',') !== -1 || val.indexOf('"') !== -1 || val.indexOf('\n') !== -1) val = '"' + val + '"';
+          return val;
+        }).join(','));
+      });
+      var csvContent = '﻿' + csvLines.join('\r\n'); // BOM de Excel doc dung UTF-8 tieng Viet
+      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // ================= Import Excel =================

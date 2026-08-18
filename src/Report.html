@@ -1,0 +1,52 @@
+<div class="panel">
+  <h1>Báo cáo &amp; Xuất hồ sơ</h1>
+  <div class="tabs">
+    <button type="button" class="rp-tab-btn active" data-rptab="devices">Danh sách thiết bị</button>
+    <button type="button" class="rp-tab-btn" data-rptab="alerts">Cảnh báo &amp; Công việc</button>
+    <button type="button" class="rp-tab-btn" data-rptab="profile">Hồ sơ 1 thiết bị</button>
+  </div>
+
+  <!-- Danh sách thiết bị -->
+  <div class="tab-panel active" data-rp-panel="devices">
+    <div id="rpDevError" class="error-text"></div>
+    <div class="form-grid">
+      <div class="field"><label>Khoa/phòng</label><select id="rpKhoaPhong"><option value="">Tất cả</option></select></div>
+      <div class="field"><label>Nhóm thiết bị</label><select id="rpNhom"><option value="">Tất cả</option></select></div>
+      <div class="field"><label>Trạng thái</label><select id="rpTrangThai"><option value="">Tất cả</option></select></div>
+      <div class="field"><label>Từ khoá</label><input type="text" id="rpKeyword" placeholder="Tên/mã/serial"></div>
+    </div>
+    <button id="rpDevFilterBtn" style="width:auto;">Lọc</button>
+    <button id="rpDevExportBtn" class="secondary" style="width:auto;">Xuất CSV</button>
+    <p class="hint-text" id="rpDevCount"></p>
+    <table class="data">
+      <thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th>Khoa/phòng</th><th>Nhóm</th><th>Trạng thái</th><th>Serial</th></tr></thead>
+      <tbody id="rpDevBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Cảnh báo & Công việc -->
+  <div class="tab-panel" data-rp-panel="alerts">
+    <div id="rpAlError" class="error-text"></div>
+    <h2>Cảnh báo đang mở</h2>
+    <button id="rpAlExportBtn" class="secondary" style="width:auto;">Xuất CSV cảnh báo</button>
+    <table class="data">
+      <thead><tr><th>Loại</th><th>Mức độ</th><th>Thiết bị</th><th>Trạng thái</th><th>Ngày phát sinh</th></tr></thead>
+      <tbody id="rpAlBody"></tbody>
+    </table>
+
+    <h2 style="margin-top:24px;">Công việc quá hạn / chưa hoàn thành</h2>
+    <button id="rpTkExportBtn" class="secondary" style="width:auto;">Xuất CSV công việc</button>
+    <table class="data">
+      <thead><tr><th>Thiết bị</th><th>Loại công việc</th><th>Người phụ trách</th><th>Hạn xử lý</th><th>Trạng thái</th></tr></thead>
+      <tbody id="rpTkBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Hồ sơ 1 thiết bị -->
+  <div class="tab-panel" data-rp-panel="profile">
+    <div id="rpProfError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị</label><select id="rpProfDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <button id="rpProfViewBtn" style="width:auto;">Xem / In hồ sơ đầy đủ</button>
+    <p class="hint-text">Mở cửa sổ mới hiển thị toàn bộ thông tin và lịch sử nghiệp vụ của thiết bị — có thể dùng chức năng In (Ctrl+P) của trình duyệt để lưu PDF.</p>
+  </div>
+</div>
