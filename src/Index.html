@@ -73,6 +73,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('TechAssurance'); ?>
       </div>
+      <div id="view-incidentrepair" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('IncidentRepair'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -119,6 +123,7 @@
         else if (view === 'lifecycle') { showView('lifecycle'); openLifecycleStage(btn.getAttribute('data-stage'), btn.getAttribute('data-label')); }
         else if (view === 'warranty') { showView('warranty'); loadWarrantyDeviceOptions(); }
         else if (view === 'techassurance') { showView('techassurance'); openTechAssurance(btn.getAttribute('data-type'), btn.getAttribute('data-label')); }
+        else if (view === 'incidentrepair') { showView('incidentrepair'); openIncidentRepairTab(btn.getAttribute('data-label')); }
         else if (view === 'stub') { setText('stubTitle', btn.getAttribute('data-label')); showView('stub'); }
       });
     });
@@ -736,6 +741,302 @@
         .withFailureHandler(function (err) { setText('taError', err && err.message ? err.message : String(err)); })
         .submitTechAssuranceResult(getToken(), currentTechType, deviceId, data);
     });
+
+    // ================= Sự cố / Sửa chữa / Bảo trì =================
+    document.querySelectorAll('.ir-tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { activateIrTab(btn.getAttribute('data-irtab')); });
+    });
+
+    function activateIrTab(tabKey) {
+      document.querySelectorAll('.ir-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('[data-ir-panel]').forEach(function (p) { p.classList.remove('active'); });
+      document.querySelector('.ir-tab-btn[data-irtab="' + tabKey + '"]').classList.add('active');
+      document.querySelector('[data-ir-panel="' + tabKey + '"]').classList.add('active');
+      if (tabKey === 'incident') loadIncidentDeviceOptions();
+      else if (tabKey === 'repair') { loadRepairDeviceOptions(); loadRepairsAwaitingConfirm(); }
+      else if (tabKey === 'maintenance') { loadMaintenanceDeviceOptions(); loadMaintenanceAwaitingConfirm(); }
+    }
+
+    function openIncidentRepairTab(label) {
+      var tabKey = (label === 'Sửa chữa') ? 'repair' : (label === 'Bảo trì') ? 'maintenance' : 'incident';
+      activateIrTab(tabKey);
+    }
+
+    // ---- Sự cố ----
+    function loadIncidentDeviceOptions() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('incError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var sel = document.getElementById('incDeviceSelect');
+          sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+          response.data.forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI;
+            sel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function (err) { setText('incError', err && err.message ? err.message : String(err)); })
+        .listActiveDevicesForIncident(getToken(), 'Sự cố/Sửa chữa/Downtime/Phụ tùng');
+    }
+
+    document.getElementById('incDeviceSelect').addEventListener('change', function () {
+      document.getElementById('incForm').style.display = this.value ? '' : 'none';
+      if (this.value) loadIncidentHistory(this.value);
+    });
+
+    function loadIncidentHistory(deviceId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('incHistoryBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (r) {
+            var tr = document.createElement('tr');
+            [r.NGAY_BAO_SU_CO, r.MUC_DO, r.MO_TA, r.TRANG_THAI].forEach(function (v) {
+              var td = document.createElement('td'); td.textContent = (v || '').toString().slice(0, 10) === v ? v : v;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listIncidentsByDevice(getToken(), deviceId);
+    }
+
+    document.getElementById('incSubmitBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('incDeviceSelect').value;
+      if (!deviceId) return;
+      var data = {
+        NGAY_BAO_SU_CO: document.getElementById('incNgayBao').value,
+        NGUON_BAO: document.getElementById('incNguonBao').value.trim(),
+        MUC_DO: document.getElementById('incMucDo').value,
+        MO_TA: document.getElementById('incMoTa').value.trim()
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('incError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+          setText('incError', '');
+          document.getElementById('incMoTa').value = '';
+          loadIncidentHistory(deviceId);
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('incError', err && err.message ? err.message : String(err)); })
+        .createIncident(getToken(), deviceId, data);
+    });
+
+    // ---- Sửa chữa ----
+    function loadRepairDeviceOptions() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('repError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var sel = document.getElementById('repDeviceSelect');
+          sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+          response.data.forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI + ' (' + d.TRANG_THAI_QUAN_LY + ')';
+            sel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function (err) { setText('repError', err && err.message ? err.message : String(err)); })
+        .listActiveDevicesForIncident(getToken(), 'Sự cố/Sửa chữa/Downtime/Phụ tùng');
+    }
+
+    document.getElementById('repDeviceSelect').addEventListener('change', function () {
+      document.getElementById('repForm').style.display = this.value ? '' : 'none';
+      if (this.value) loadRepairHistory(this.value);
+    });
+
+    function loadRepairHistory(deviceId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('repHistoryBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (r) {
+            var tr = document.createElement('tr');
+            var tdBd = document.createElement('td'); tdBd.textContent = (r.NGAY_BAT_DAU || '').toString().slice(0, 10);
+            var tdHt = document.createElement('td'); tdHt.textContent = (r.NGAY_HOAN_THANH || '').toString().slice(0, 10);
+            var tdXn = document.createElement('td'); tdXn.textContent = r.XAC_NHAN_SU_DUNG || '';
+            var tdAction = document.createElement('td');
+            if (Utils_isBlank(r.NGAY_HOAN_THANH)) {
+              var btn = document.createElement('button'); btn.textContent = 'Báo hoàn thành'; btn.style.width = 'auto';
+              btn.addEventListener('click', function () { markRepairDoneAction(r.ID, deviceId); });
+              tdAction.appendChild(btn);
+            }
+            [tdBd, tdHt, tdXn, tdAction].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listRepairsByDevice(getToken(), deviceId);
+    }
+
+    function Utils_isBlank(v) { return v === null || v === undefined || String(v).trim() === ''; }
+
+    document.getElementById('repSubmitBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('repDeviceSelect').value;
+      if (!deviceId) return;
+      var data = {
+        NGAY_BAT_DAU: document.getElementById('repNgayBatDau').value,
+        DON_VI_THUC_HIEN: document.getElementById('repDonVi').value.trim(),
+        NGUYEN_NHAN: document.getElementById('repNguyenNhan').value.trim(),
+        NOI_DUNG: document.getElementById('repNoiDung').value.trim(),
+        CHI_PHI: document.getElementById('repChiPhi').value
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('repError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+          setText('repError', '');
+          loadRepairHistory(deviceId);
+          loadRepairDeviceOptions();
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('repError', err && err.message ? err.message : String(err)); })
+        .createRepair(getToken(), deviceId, null, data);
+    });
+
+    function markRepairDoneAction(repairId, deviceId) {
+      var ketQua = window.prompt('Kết quả kiểm tra sau sửa chữa (mô tả ngắn):') || '';
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('repError', response && response.error ? response.error.message : 'Thất bại.'); return; }
+          setText('repError', '');
+          loadRepairHistory(deviceId);
+          loadRepairsAwaitingConfirm();
+        })
+        .withFailureHandler(function (err) { setText('repError', err && err.message ? err.message : String(err)); })
+        .markRepairDone(getToken(), repairId, { KET_QUA_KIEM_TRA_SAU_SUA: ketQua });
+    }
+
+    function loadRepairsAwaitingConfirm() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('repConfirmBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (r) {
+            var tr = document.createElement('tr');
+            var tdMa = document.createElement('td'); tdMa.textContent = r.MA_THIET_BI;
+            var tdTen = document.createElement('td'); tdTen.textContent = r.TEN_THIET_BI;
+            var tdKq = document.createElement('td'); tdKq.textContent = r.KET_QUA_KIEM_TRA_SAU_SUA || '';
+            var tdAction = document.createElement('td');
+            var okBtn = document.createElement('button'); okBtn.textContent = 'Được phép'; okBtn.style.width = 'auto'; okBtn.style.marginRight = '6px';
+            okBtn.addEventListener('click', function () { confirmRepairAction(r.ID, 'Được phép'); });
+            var noBtn = document.createElement('button'); noBtn.textContent = 'Chưa được phép'; noBtn.style.width = 'auto'; noBtn.className = 'secondary';
+            noBtn.addEventListener('click', function () { confirmRepairAction(r.ID, 'Chưa được phép'); });
+            tdAction.appendChild(okBtn); tdAction.appendChild(noBtn);
+            [tdMa, tdTen, tdKq, tdAction].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listRepairsAwaitingConfirm(getToken());
+    }
+
+    function confirmRepairAction(repairId, decision) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('repError', response && response.error ? response.error.message : 'Thất bại.'); return; }
+          setText('repError', '');
+          loadRepairsAwaitingConfirm();
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('repError', err && err.message ? err.message : String(err)); })
+        .confirmRepairSafety(getToken(), repairId, decision);
+    }
+
+    // ---- Bảo trì ----
+    function loadMaintenanceDeviceOptions() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('maintError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var sel = document.getElementById('maintDeviceSelect');
+          sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+          response.data.filter(function (d) { return d.TRANG_THAI_QUAN_LY === 'Đang sử dụng'; }).forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI;
+            sel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function (err) { setText('maintError', err && err.message ? err.message : String(err)); })
+        .listActiveDevicesForIncident(getToken(), 'Bảo hành/Bảo trì/Kiểm định/Hiệu chuẩn');
+    }
+
+    document.getElementById('maintDeviceSelect').addEventListener('change', function () {
+      document.getElementById('maintForm').style.display = this.value ? '' : 'none';
+      if (this.value) loadMaintenanceHistory(this.value);
+    });
+
+    function loadMaintenanceHistory(deviceId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('maintHistoryBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (r) {
+            var tr = document.createElement('tr');
+            [r.NGAY_KE_HOACH, r.NGAY_THUC_HIEN, r.KET_QUA].forEach(function (v) {
+              var td = document.createElement('td'); td.textContent = v || ''; tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listMaintenanceByDevice(getToken(), deviceId);
+    }
+
+    document.getElementById('maintSubmitBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('maintDeviceSelect').value;
+      if (!deviceId) return;
+      var data = {
+        KY_BAO_TRI: document.getElementById('maintKy').value.trim(),
+        NGAY_KE_HOACH: document.getElementById('maintNgayKeHoach').value,
+        NGUOI_THUC_HIEN: document.getElementById('maintNguoiThucHien').value.trim()
+      };
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('maintError', response && response.error ? response.error.message : 'Lưu thất bại.'); return; }
+          setText('maintError', '');
+          loadMaintenanceDeviceOptions();
+          document.getElementById('maintForm').style.display = 'none';
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('maintError', err && err.message ? err.message : String(err)); })
+        .createMaintenance(getToken(), deviceId, data);
+    });
+
+    function loadMaintenanceAwaitingConfirm() {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) return;
+          var tbody = document.getElementById('maintConfirmBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (m) {
+            var tr = document.createElement('tr');
+            var tdMa = document.createElement('td'); tdMa.textContent = m.MA_THIET_BI;
+            var tdTen = document.createElement('td'); tdTen.textContent = m.TEN_THIET_BI;
+            var tdAction = document.createElement('td');
+            var okBtn = document.createElement('button'); okBtn.textContent = 'Được phép'; okBtn.style.width = 'auto'; okBtn.style.marginRight = '6px';
+            okBtn.addEventListener('click', function () { confirmMaintenanceAction(m.ID, 'Được phép'); });
+            var noBtn = document.createElement('button'); noBtn.textContent = 'Chưa được phép'; noBtn.style.width = 'auto'; noBtn.className = 'secondary';
+            noBtn.addEventListener('click', function () { confirmMaintenanceAction(m.ID, 'Chưa được phép'); });
+            tdAction.appendChild(okBtn); tdAction.appendChild(noBtn);
+            [tdMa, tdTen, tdAction].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function () {})
+        .listMaintenanceAwaitingConfirm(getToken());
+    }
+
+    function confirmMaintenanceAction(maintenanceId, decision) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('maintError', response && response.error ? response.error.message : 'Thất bại.'); return; }
+          setText('maintError', '');
+          loadMaintenanceAwaitingConfirm();
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) { setText('maintError', err && err.message ? err.message : String(err)); })
+        .confirmMaintenanceSafety(getToken(), maintenanceId, decision);
+    }
 
     // ================= Import Excel =================
     var importValidRowsCache = [];

@@ -16,7 +16,10 @@
  * submitHandover, confirmHandover, listPendingHandoverConfirm, listWarrantyByDevice,
  * createWarrantyClaim, updateWarrantyClaim, listActiveDevicesForWarranty, listConfig,
  * createConfig, updateConfig, listActiveDevicesForTech, listTechAssuranceByDevice,
- * submitTechAssuranceResult.
+ * submitTechAssuranceResult, listActiveDevicesForIncident, createIncident, listIncidentsByDevice,
+ * createRepair, markRepairDone, confirmRepairSafety, listRepairsByDevice,
+ * listRepairsAwaitingConfirm, createMaintenance, markMaintenanceDone, confirmMaintenanceSafety,
+ * listMaintenanceByDevice, listMaintenanceAwaitingConfirm.
  */
 
 function doGet(e) {
@@ -141,6 +144,58 @@ function confirmHandover(token, handoverId) {
 
 function listPendingHandoverConfirm(token) {
   return _invokeController_(function () { return Utils.success(Lifecycle.listPendingHandoverConfirm(token)); });
+}
+
+function listActiveDevicesForIncident(token, module) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.listActiveDevices(token, module)); });
+}
+
+function createIncident(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.createIncident(token, deviceId, data)); });
+}
+
+function listIncidentsByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.listIncidentsByDevice(token, deviceId)); });
+}
+
+function createRepair(token, deviceId, incidentId, data) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.createRepair(token, deviceId, incidentId, data)); });
+}
+
+function markRepairDone(token, repairId, data) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.markRepairDone(token, repairId, data)); });
+}
+
+function confirmRepairSafety(token, repairId, decision) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.confirmRepairSafety(token, repairId, decision)); });
+}
+
+function listRepairsByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.listRepairsByDevice(token, deviceId)); });
+}
+
+function listRepairsAwaitingConfirm(token) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.listRepairsAwaitingConfirm(token)); });
+}
+
+function createMaintenance(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.createMaintenance(token, deviceId, data)); });
+}
+
+function markMaintenanceDone(token, maintenanceId, data) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.markMaintenanceDone(token, maintenanceId, data)); });
+}
+
+function confirmMaintenanceSafety(token, maintenanceId, decision) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.confirmMaintenanceSafety(token, maintenanceId, decision)); });
+}
+
+function listMaintenanceByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.listMaintenanceByDevice(token, deviceId)); });
+}
+
+function listMaintenanceAwaitingConfirm(token) {
+  return _invokeController_(function () { return Utils.success(IncidentRepair.listMaintenanceAwaitingConfirm(token)); });
 }
 
 function listActiveDevicesForTech(token) {

@@ -1,0 +1,69 @@
+<div class="panel">
+  <h1>Sự cố &amp; Sửa chữa &amp; Bảo trì</h1>
+  <div class="tabs">
+    <button type="button" class="ir-tab-btn active" data-irtab="incident">Sự cố</button>
+    <button type="button" class="ir-tab-btn" data-irtab="repair">Sửa chữa</button>
+    <button type="button" class="ir-tab-btn" data-irtab="maintenance">Bảo trì</button>
+  </div>
+
+  <!-- Sự cố -->
+  <div class="tab-panel active" data-ir-panel="incident">
+    <div id="incError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị</label><select id="incDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <div id="incForm" style="display:none;">
+      <div class="form-grid">
+        <div class="field"><label>Ngày báo sự cố *</label><input type="date" id="incNgayBao"></div>
+        <div class="field"><label>Nguồn báo</label><input type="text" id="incNguonBao" placeholder="Dashboard/Hồ sơ/QR..."></div>
+        <div class="field"><label>Mức độ *</label>
+          <select id="incMucDo"><option value="Thấp">Thấp</option><option value="TB">Trung bình</option><option value="Cao">Cao</option><option value="Khẩn cấp">Khẩn cấp</option></select>
+        </div>
+        <div class="field full"><label>Mô tả *</label><input type="text" id="incMoTa"></div>
+      </div>
+      <button id="incSubmitBtn" style="width:auto;">Báo sự cố</button>
+      <p class="hint-text">Mức độ Cao/Khẩn cấp sẽ tự chuyển thiết bị sang "Đang sửa chữa".</p>
+      <h2>Lịch sử sự cố</h2>
+      <table class="data"><thead><tr><th>Ngày báo</th><th>Mức độ</th><th>Mô tả</th><th>Trạng thái</th></tr></thead><tbody id="incHistoryBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Sửa chữa -->
+  <div class="tab-panel" data-ir-panel="repair">
+    <div id="repError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị</label><select id="repDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <div id="repForm" style="display:none;">
+      <div class="form-grid">
+        <div class="field"><label>Ngày bắt đầu sửa</label><input type="date" id="repNgayBatDau"></div>
+        <div class="field"><label>Đơn vị thực hiện</label><input type="text" id="repDonVi"></div>
+        <div class="field full"><label>Nguyên nhân</label><input type="text" id="repNguyenNhan"></div>
+        <div class="field full"><label>Nội dung sửa chữa</label><input type="text" id="repNoiDung"></div>
+        <div class="field"><label>Chi phí</label><input type="number" id="repChiPhi"></div>
+      </div>
+      <button id="repSubmitBtn" style="width:auto;">Tạo phiếu sửa chữa</button>
+      <h2>Phiếu sửa chữa của thiết bị này</h2>
+      <table class="data"><thead><tr><th>Ngày bắt đầu</th><th>Ngày hoàn thành</th><th>Xác nhận</th><th></th></tr></thead><tbody id="repHistoryBody"></tbody></table>
+    </div>
+
+    <h2 style="margin-top:24px;">Phiếu chờ QLTB xác nhận an toàn (sau khi KTV báo hoàn thành)</h2>
+    <table class="data"><thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th>Kết quả kiểm tra</th><th></th></tr></thead><tbody id="repConfirmBody"></tbody></table>
+  </div>
+
+  <!-- Bảo trì -->
+  <div class="tab-panel" data-ir-panel="maintenance">
+    <div id="maintError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị (chỉ thiết bị đang sử dụng)</label><select id="maintDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <div id="maintForm" style="display:none;">
+      <div class="form-grid">
+        <div class="field"><label>Kỳ bảo trì</label><input type="text" id="maintKy" placeholder="Tháng/Quý/Năm"></div>
+        <div class="field"><label>Ngày kế hoạch</label><input type="date" id="maintNgayKeHoach"></div>
+        <div class="field"><label>Người thực hiện</label><input type="text" id="maintNguoiThucHien"></div>
+      </div>
+      <button id="maintSubmitBtn" style="width:auto;">Tạo phiếu bảo trì</button>
+      <p class="hint-text">Tạo phiếu sẽ chuyển thiết bị sang "Đang bảo trì" ngay.</p>
+      <h2>Phiếu bảo trì của thiết bị này</h2>
+      <table class="data"><thead><tr><th>Ngày kế hoạch</th><th>Ngày thực hiện</th><th>Kết quả</th></tr></thead><tbody id="maintHistoryBody"></tbody></table>
+    </div>
+
+    <h2 style="margin-top:24px;">Phiếu chờ xác nhận an toàn</h2>
+    <table class="data"><thead><tr><th>Mã TB</th><th>Tên thiết bị</th><th></th></tr></thead><tbody id="maintConfirmBody"></tbody></table>
+  </div>
+</div>
