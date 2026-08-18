@@ -1,0 +1,29 @@
+<div class="panel">
+  <h1>Tài liệu thiết bị</h1>
+  <div id="docError" class="error-text"></div>
+  <div class="field"><label>Chọn thiết bị</label><select id="docDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+
+  <div id="docBody" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>Nhóm tài liệu *</label>
+        <select id="docNhom">
+          <option value="Catalogue / Hướng dẫn sử dụng">Catalogue / Hướng dẫn sử dụng</option>
+          <option value="Giấy phép nhập khẩu / lưu hành">Giấy phép nhập khẩu / lưu hành</option>
+          <option value="Chứng nhận kiểm định / hiệu chuẩn">Chứng nhận kiểm định / hiệu chuẩn</option>
+          <option value="Giấy phép an toàn bức xạ">Giấy phép an toàn bức xạ</option>
+          <option value="Hồ sơ bảo hành">Hồ sơ bảo hành</option>
+          <option value="Hoá đơn / Chứng từ mua sắm">Hoá đơn / Chứng từ mua sắm</option>
+          <option value="Khác">Khác</option>
+        </select>
+      </div>
+      <div class="field"><label>Chọn file *</label><input type="file" id="docFileInput"></div>
+    </div>
+    <button id="docUploadBtn" style="width:auto;">Tải lên</button>
+
+    <h2 style="margin-top:24px;">Tài liệu đã lưu</h2>
+    <table class="data">
+      <thead><tr><th>Nhóm tài liệu</th><th>Tên file</th><th>Phiên bản</th><th>Người tải lên</th><th>Ngày tải lên</th><th></th></tr></thead>
+      <tbody id="docListBody"></tbody>
+    </table>
+  </div>
+</div>

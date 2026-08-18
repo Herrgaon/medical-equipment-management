@@ -23,7 +23,8 @@
  * createTransfer, approveTransfer, confirmTransferReceived, listTransfersByDevice,
  * listPendingTransfers, startInventorySession, scanInventoryDevice, getInventorySessionResults,
  * listActiveDevicesForRadiation, listRadiationSafetyByDevice, submitRadiationSafety,
- * listXrayRoomByDevice, submitXrayRoom.
+ * listXrayRoomByDevice, submitXrayRoom, listActiveDevicesForDocument, listDocumentsByDevice,
+ * uploadDocument, deleteDocument.
  */
 
 function doGet(e) {
@@ -264,6 +265,22 @@ function listXrayRoomByDevice(token, deviceId) {
 
 function submitXrayRoom(token, deviceId, data) {
   return _invokeController_(function () { return Utils.success(Radiation.submitXrayRoom(token, deviceId, data)); });
+}
+
+function listActiveDevicesForDocument(token) {
+  return _invokeController_(function () { return Utils.success(Document.listActiveDevices(token)); });
+}
+
+function listDocumentsByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(Document.listByDevice(token, deviceId)); });
+}
+
+function uploadDocument(token, deviceId, nhomTaiLieu, fileName, base64Data) {
+  return _invokeController_(function () { return Utils.success(Document.uploadDocument(token, deviceId, nhomTaiLieu, fileName, base64Data)); });
+}
+
+function deleteDocument(token, docId) {
+  return _invokeController_(function () { return Utils.success(Document.deleteDocument(token, docId)); });
 }
 
 function listWarrantyByDevice(token, deviceId) {

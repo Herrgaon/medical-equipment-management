@@ -85,6 +85,10 @@
         <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
         <?!= include('Radiation'); ?>
       </div>
+      <div id="view-document" class="view" style="display:none;">
+        <!-- RAW OUTPUT: include() dùng tên file hardcode, không phải giá trị từ người dùng -->
+        <?!= include('Document'); ?>
+      </div>
       <div id="view-stub" class="view" style="display:none;">
         <div class="panel">
           <div class="stub-box">
@@ -137,6 +141,7 @@
         else if (view === 'incidentrepair') { showView('incidentrepair'); openIncidentRepairTab(btn.getAttribute('data-label')); }
         else if (view === 'transferinventory') { showView('transferinventory'); openTransferInventoryTab(btn.getAttribute('data-label')); }
         else if (view === 'radiation') { showView('radiation'); openRadiationTab(btn.getAttribute('data-label')); }
+        else if (view === 'document') { showView('document'); loadDocumentDeviceOptions(); }
         else if (view === 'stub') { setText('stubTitle', btn.getAttribute('data-label')); showView('stub'); }
       });
     });
@@ -1428,6 +1433,96 @@
         .withFailureHandler(function (err) { setText('radRoomError', err && err.message ? err.message : String(err)); })
         .submitXrayRoom(getToken(), deviceId, data);
     });
+
+    // ================= Tài liệu thiết bị =================
+    function loadDocumentDeviceOptions() {
+      document.getElementById('docBody').style.display = 'none';
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('docError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var sel = document.getElementById('docDeviceSelect');
+          sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+          response.data.forEach(function (d) {
+            var opt = document.createElement('option'); opt.value = d.ID; opt.textContent = d.MA_THIET_BI + ' — ' + d.TEN_THIET_BI;
+            sel.appendChild(opt);
+          });
+        })
+        .withFailureHandler(function (err) { setText('docError', err && err.message ? err.message : String(err)); })
+        .listActiveDevicesForDocument(getToken());
+    }
+
+    document.getElementById('docDeviceSelect').addEventListener('change', function () {
+      document.getElementById('docBody').style.display = this.value ? '' : 'none';
+      if (this.value) loadDocumentList(this.value);
+    });
+
+    function loadDocumentList(deviceId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('docError', response && response.error ? response.error.message : 'Lỗi tải danh sách.'); return; }
+          var tbody = document.getElementById('docListBody');
+          tbody.innerHTML = '';
+          response.data.forEach(function (d) {
+            var tr = document.createElement('tr');
+            var tdNhom = document.createElement('td'); tdNhom.textContent = d.NHOM_TAI_LIEU;
+            var tdTen = document.createElement('td');
+            if (d.URL) {
+              var a = document.createElement('a'); a.href = d.URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = d.TEN_FILE;
+              tdTen.appendChild(a);
+            } else {
+              tdTen.textContent = d.TEN_FILE;
+            }
+            var tdPhien = document.createElement('td'); tdPhien.textContent = d.PHIEN_BAN;
+            var tdNguoi = document.createElement('td'); tdNguoi.textContent = d.NGUOI_UPLOAD;
+            var tdNgay = document.createElement('td'); tdNgay.textContent = d.NGAY_TAO;
+            var tdAction = document.createElement('td');
+            var delBtn = document.createElement('button'); delBtn.textContent = 'Xoá'; delBtn.style.width = 'auto'; delBtn.className = 'secondary';
+            delBtn.addEventListener('click', function () { deleteDocumentAction(d.ID, deviceId); });
+            tdAction.appendChild(delBtn);
+            [tdNhom, tdTen, tdPhien, tdNguoi, tdNgay, tdAction].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+        })
+        .withFailureHandler(function (err) { setText('docError', err && err.message ? err.message : String(err)); })
+        .listDocumentsByDevice(getToken(), deviceId);
+    }
+
+    document.getElementById('docUploadBtn').addEventListener('click', function () {
+      var deviceId = document.getElementById('docDeviceSelect').value;
+      if (!deviceId) return;
+      var fileInput = document.getElementById('docFileInput');
+      var file = fileInput.files[0];
+      if (!file) { setText('docError', 'Chưa chọn file.'); return; }
+      var nhom = document.getElementById('docNhom').value;
+      var btn = document.getElementById('docUploadBtn');
+      btn.disabled = true;
+      setText('docError', '');
+
+      fileToBase64(file).then(function (base64Data) {
+        google.script.run
+          .withSuccessHandler(function (response) {
+            btn.disabled = false;
+            if (!response || !response.success) { setText('docError', response && response.error ? response.error.message : 'Tải lên thất bại.'); return; }
+            fileInput.value = '';
+            loadDocumentList(deviceId);
+          })
+          .withFailureHandler(function (err) { btn.disabled = false; setText('docError', err && err.message ? err.message : String(err)); })
+          .uploadDocument(getToken(), deviceId, nhom, file.name, base64Data);
+      }).catch(function (err) {
+        btn.disabled = false;
+        setText('docError', 'Không đọc được file: ' + err);
+      });
+    });
+
+    function deleteDocumentAction(docId, deviceId) {
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.success) { setText('docError', response && response.error ? response.error.message : 'Xoá thất bại.'); return; }
+          loadDocumentList(deviceId);
+        })
+        .withFailureHandler(function (err) { setText('docError', err && err.message ? err.message : String(err)); })
+        .deleteDocument(getToken(), docId);
+    }
 
     // ================= Import Excel =================
     var importValidRowsCache = [];
