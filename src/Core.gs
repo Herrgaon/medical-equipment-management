@@ -21,7 +21,9 @@
  * listRepairsAwaitingConfirm, createMaintenance, markMaintenanceDone, confirmMaintenanceSafety,
  * listMaintenanceByDevice, listMaintenanceAwaitingConfirm, listActiveDevicesForTransfer,
  * createTransfer, approveTransfer, confirmTransferReceived, listTransfersByDevice,
- * listPendingTransfers, startInventorySession, scanInventoryDevice, getInventorySessionResults.
+ * listPendingTransfers, startInventorySession, scanInventoryDevice, getInventorySessionResults,
+ * listActiveDevicesForRadiation, listRadiationSafetyByDevice, submitRadiationSafety,
+ * listXrayRoomByDevice, submitXrayRoom.
  */
 
 function doGet(e) {
@@ -242,6 +244,26 @@ function scanInventoryDevice(token, sessionId, deviceId, data) {
 
 function getInventorySessionResults(token, sessionId) {
   return _invokeController_(function () { return Utils.success(TransferInventory.getSessionResults(token, sessionId)); });
+}
+
+function listActiveDevicesForRadiation(token) {
+  return _invokeController_(function () { return Utils.success(Radiation.listActiveDevices(token)); });
+}
+
+function listRadiationSafetyByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(Radiation.listSafetyByDevice(token, deviceId)); });
+}
+
+function submitRadiationSafety(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(Radiation.submitSafety(token, deviceId, data)); });
+}
+
+function listXrayRoomByDevice(token, deviceId) {
+  return _invokeController_(function () { return Utils.success(Radiation.listXrayRoomByDevice(token, deviceId)); });
+}
+
+function submitXrayRoom(token, deviceId, data) {
+  return _invokeController_(function () { return Utils.success(Radiation.submitXrayRoom(token, deviceId, data)); });
 }
 
 function listWarrantyByDevice(token, deviceId) {

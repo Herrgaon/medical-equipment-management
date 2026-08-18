@@ -1,0 +1,60 @@
+<div class="panel">
+  <h1>An toàn bức xạ &amp; Hồ sơ phòng XQ/CT</h1>
+  <div class="tabs">
+    <button type="button" class="rad-tab-btn active" data-radtab="safety">An toàn bức xạ</button>
+    <button type="button" class="rad-tab-btn" data-radtab="xrayroom">Hồ sơ phòng XQ/CT</button>
+  </div>
+
+  <!-- An toàn bức xạ -->
+  <div class="tab-panel active" data-rad-panel="safety">
+    <div id="radSafetyError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị</label><select id="radSafetyDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <div id="radSafetyForm" style="display:none;">
+      <div class="form-grid">
+        <div class="field"><label>Áp dụng *</label>
+          <select id="radApDung">
+            <option value="Có">Có</option>
+            <option value="Không">Không</option>
+            <option value="Chưa xác định">Chưa xác định</option>
+          </select>
+        </div>
+        <div class="field"><label>Số giấy phép</label><input type="text" id="radSoGiayPhep"></div>
+        <div class="field"><label>Cơ quan cấp</label><input type="text" id="radCoQuanCap"></div>
+        <div class="field"><label>Ngày cấp</label><input type="date" id="radNgayCap"></div>
+        <div class="field"><label>Thời hạn</label><input type="date" id="radThoiHan"></div>
+        <div class="field full"><label>Ghi chú</label><input type="text" id="radGhiChu"></div>
+      </div>
+      <button id="radSafetySubmitBtn" style="width:auto;">Ghi nhận</button>
+      <h2 style="margin-top:24px;">Lịch sử</h2>
+      <table class="data">
+        <thead><tr><th>Áp dụng</th><th>Số giấy phép</th><th>Cơ quan cấp</th><th>Ngày cấp</th><th>Thời hạn</th></tr></thead>
+        <tbody id="radSafetyHistoryBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Hồ sơ phòng XQ/CT -->
+  <div class="tab-panel" data-rad-panel="xrayroom">
+    <div id="radRoomError" class="error-text"></div>
+    <div class="field"><label>Chọn thiết bị</label><select id="radRoomDeviceSelect"><option value="">-- Chọn thiết bị --</option></select></div>
+    <div id="radRoomForm" style="display:none;">
+      <div class="form-grid">
+        <div class="field"><label>Loại phòng</label><input type="text" id="radLoaiPhong" placeholder="X-quang / CT..."></div>
+        <div class="field"><label>Tên phòng *</label><input type="text" id="radTenPhong"></div>
+        <div class="field"><label>Vị trí</label><select id="radViTri"><option value="">--</option></select></div>
+        <div class="field"><label>Số giấy chứng nhận</label><input type="text" id="radSoGiayChungNhan"></div>
+        <div class="field"><label>Ngày cấp</label><input type="date" id="radRoomNgayCap"></div>
+        <div class="field"><label>Hiệu lực đến</label><input type="date" id="radHieuLucDen"></div>
+        <div class="field"><label>Đơn vị cấp</label><input type="text" id="radDonViCap"></div>
+        <div class="field"><label>Kết quả</label><input type="text" id="radKetQua"></div>
+        <div class="field full"><label>Ghi chú</label><input type="text" id="radRoomGhiChu"></div>
+      </div>
+      <button id="radRoomSubmitBtn" style="width:auto;">Ghi nhận</button>
+      <h2 style="margin-top:24px;">Lịch sử</h2>
+      <table class="data">
+        <thead><tr><th>Tên phòng</th><th>Số giấy chứng nhận</th><th>Ngày cấp</th><th>Hiệu lực đến</th><th>Kết quả</th></tr></thead>
+        <tbody id="radRoomHistoryBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>

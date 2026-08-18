@@ -35,9 +35,9 @@ Tài liệu thiết kế **chưa được bệnh viện phê duyệt chính th�
 
 Kế hoạch 4 giai đoạn ở mục 13 tài liệu thiết kế — về nguyên tắc không triển khai song song nhiều giai đoạn, nhưng thực tế đã xây khung giao diện đầy đủ mọi module (kể cả Giai đoạn 2-3) theo yêu cầu trực tiếp của user, chỉ để "chưa triển khai" (stub) cho phần chưa code. Kế hoạch chi tiết Sprint 1.1 gốc: `C:\Users\admin\.claude\plans\hazy-fluttering-dragonfly.md`.
 
-**Module đã chạy thật** (không còn stub): Trang chủ, Thiết bị (CRUD đầy đủ), Quản trị hệ thống (danh mục 02-09, cấu hình 27_CAU_HINH, người dùng, audit log), Mã QR (sinh client-side + in tem), Import Excel, Tiếp nhận/Nghiệm thu/Bàn giao, Bảo hành, Kiểm định, Hiệu chuẩn, Sự cố/Sửa chữa/Bảo trì (dùng chung 1 bước xác nhận an toàn).
+**Module đã chạy thật** (không còn stub): Trang chủ, Thiết bị (CRUD đầy đủ), Quản trị hệ thống (danh mục 02-09, cấu hình 27_CAU_HINH, người dùng, audit log), Mã QR (sinh client-side + in tem), Import Excel, Tiếp nhận/Nghiệm thu/Bàn giao, Bảo hành, Kiểm định, Hiệu chuẩn, Sự cố/Sửa chữa/Bảo trì (dùng chung 1 bước xác nhận an toàn), Điều chuyển (Tạo yêu cầu → Duyệt → Khoa/phòng mới xác nhận đã nhận), Kiểm kê (theo phiên, tự phát hiện lệch vị trí).
 
-**Còn là stub**: Bức xạ (An toàn bức xạ, Hồ sơ phòng XQ/CT), Điều chuyển, Kiểm kê, Tài liệu, Cảnh báo & Công việc, Báo cáo.
+**Còn là stub**: Bức xạ (An toàn bức xạ, Hồ sơ phòng XQ/CT), Tài liệu, Cảnh báo & Công việc, Báo cáo.
 
 Quy ước đặt tên file server: nếu 1 module có cả `.html` và `.gs` cùng "tên nghiệp vụ" (vd Admin, Import, Lifecycle), file `.gs` phải đặt tên khác đi (hậu tố `Service`, vd `AdminService.gs`) — Apps Script không cho phép 2 file trùng tên dù khác đuôi, `clasp push` sẽ báo lỗi "A file with this name already exists".
 
