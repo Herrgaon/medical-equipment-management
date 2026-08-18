@@ -2079,9 +2079,11 @@
       if (!importValidRowsCache.length) return;
       var btn = document.getElementById('importConfirmBtn');
       btn.disabled = true;
+      document.getElementById('importConfirmHint').style.display = '';
       google.script.run
         .withSuccessHandler(function (response) {
           btn.disabled = false;
+          document.getElementById('importConfirmHint').style.display = 'none';
           document.getElementById('importStep2').style.display = 'none';
           document.getElementById('importStep3').style.display = '';
           if (!response || !response.success) {
@@ -2097,6 +2099,7 @@
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
+          document.getElementById('importConfirmHint').style.display = 'none';
           setText('importError', err && err.message ? err.message : String(err));
         })
         .confirmImport(getToken(), importValidRowsCache);

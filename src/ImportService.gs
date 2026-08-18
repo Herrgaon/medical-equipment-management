@@ -389,8 +389,12 @@ var Import = {
 
   /**
    * Ghi thật các dòng đã qua xem trước. Kiểm tra lại trùng SERIAL lần nữa (phòng trường hợp có
-   * người khác nhập thêm dữ liệu giữa lúc xem trước và lúc xác nhận) — không tin hoàn toàn vào
-   * kết quả validate trước đó. Tự tạo danh mục còn thiếu (xem ghi chú đầu file) trước khi tạo thiết bị.
+   * người khác nhập thêm dữ liệu giữa lúc xem trước và lúc xác nhận) bằng 1 tập hợp SERIAL dựng
+   * SẴN 1 LẦN lúc bắt đầu (KHÔNG gọi Device._assertSerialNotDuplicate_ trong vòng lặp — hàm đó
+   * quét lại TOÀN BỘ sheet 01_THIET_BI mỗi lần gọi, mà sheet lại phình to dần theo từng dòng vừa
+   * ghi thêm trong CHÍNH đợt import này -> tổng chi phí tăng theo bình phương số dòng, đủ để "treo"
+   * giữa chừng khi nhập hàng trăm dòng — đã gặp thực tế, sửa ở đây). Tự tạo danh mục còn thiếu
+   * (xem ghi chú đầu file) trước khi tạo thiết bị.
    */
   confirmImport: function (token, rows) {
     var auth = Auth.assertPermission(token, IMPORT_MODULE, 'CREATE');
@@ -401,8 +405,18 @@ var Import = {
     var failedRows = [];
     var categoryCache = {};
 
+    var existingSerials = {};
+    Database.list('01_THIET_BI', {}).items.forEach(function (d) {
+      if (d.SERIAL) existingSerials[String(d.SERIAL).trim().toLowerCase()] = true;
+    });
+
     rows.forEach(function (row) {
       try {
+        var serialKey = row.SERIAL ? String(row.SERIAL).trim().toLowerCase() : '';
+        if (serialKey && existingSerials[serialKey]) {
+          throw new AppError(ERROR_CODES.DUPLICATE, 'Số serial "' + row.SERIAL + '" đã tồn tại trong hệ thống.');
+        }
+
         var payload = {
           TEN_THIET_BI: row.TEN_THIET_BI,
           NUOC_SAN_XUAT: row.NUOC_SAN_XUAT || '',
@@ -431,7 +445,6 @@ var Import = {
         }
 
         Device._assertRequiredFields_(payload);
-        Device._assertSerialNotDuplicate_(payload.SERIAL, null);
         var maThietBi = Database._withLock_(function () { return Database._generateDeviceCode_(); });
         payload.MA_THIET_BI = maThietBi;
         payload.TRANG_THAI_QUAN_LY = DEVICE_STATUS.DANG_TIEP_NHAN;
@@ -440,6 +453,7 @@ var Import = {
 
         var result = Database.insertRow('01_THIET_BI', payload, auth.user.tenDangNhap);
         Database.appendAuditLog(auth.user.tenDangNhap, 'IMPORT_DEVICE', '01_THIET_BI', result.data.ID, null, result.data);
+        if (serialKey) existingSerials[serialKey] = true;
         insertedCount++;
       } catch (e) {
         failedRows.push({ rowNumber: row.rowNumber, message: (e instanceof AppError) ? e.message : ('Lỗi không xác định: ' + e) });
